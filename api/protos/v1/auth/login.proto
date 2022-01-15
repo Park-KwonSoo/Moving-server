@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package v1.login_proto;
+
+option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/auth";
+
+// import "api/protos/google/api/annotations.proto";
+
+service LoginService {
+    rpc Login(LoginReq) returns (LoginRes) {
+        // option (google.api.http) = { 
+        //     post : "/auth/login" 
+        //     body : "request"
+        // };
+    };
+}
+
+message LoginReq {
+    string loginType = 1;
+    string userId = 2;
+    string password = 3;
+}
+
+message LoginRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    string token = 3;
+}

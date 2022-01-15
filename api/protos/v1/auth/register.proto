@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package v1.register_proto;
+
+option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/auth";
+
+// import "api/protos/google/api/annotations.proto";
+
+service RegisterService {
+    rpc Register(RegisterReq) returns (RegisterRes) {
+        // option (google.api.http) = {
+        //     post : "/auth/register" 
+        //     body : "request"
+        // };
+    };
+}
+
+message RegisterReq {
+    string registerType = 1;
+    string userId = 2;
+    string password = 3;
+    string passwordCheck = 4;
+    
+    string name = 5;
+    string birth = 6;
+    string gender = 7;
+    string profileImg = 8;
+}
+
+message RegisterRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
