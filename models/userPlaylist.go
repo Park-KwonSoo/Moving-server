@@ -1,7 +1,7 @@
 package models
 
 type UserPlaylist struct {
-	basicType
+	baseType
 	User     User `gorm:"constraint:OnDelete:CASCADE;"`
 	Playlist []Playlist
 }

@@ -2,6 +2,7 @@ package auth_service
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
@@ -19,8 +20,14 @@ type RegisterServer struct {
 }
 
 func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) (*authpb.RegisterRes, error) {
-	authType := req.RegisterType
-	fmt.Println(authType)
+	db.CreateNewUser(db.User{
+		UserId: sql.NullString{
+			String: req.UserId,
+			Valid:  true,
+		},
+		Password: req.Password,
+		UserType: req.RegisterType,
+	})
 
 	return &authpb.RegisterRes{
 		RsltMsg: "Success",

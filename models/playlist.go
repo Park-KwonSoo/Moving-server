@@ -1,7 +1,7 @@
 package models
 
 type Playlist struct {
-	basicType
+	baseType
 	UserPlaylistID uint
 	PlaylistName   string
 	Music          []Music `gorm:"many2many:playlist_musics;"`

@@ -5,7 +5,7 @@ import (
 )
 
 type Profile struct {
-	basicType
+	baseType
 	User         User
 	Name         string
 	Birth        string
@@ -17,7 +17,7 @@ func FindProfileById(id uint) *Profile {
 	profile := &Profile{}
 
 	query := qb.Select("user, name, birth, gender, profile_image").From("dev.profile").Where("id", id).ToString()
-	db.QueryRow(query).Scan(
+	psql.db.QueryRow(query).Scan(
 		&profile.User, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage)
 
 	return profile
@@ -27,7 +27,7 @@ func FindProfileByUserId(userId string) *Profile {
 	profile := &Profile{}
 
 	query := qb.Select("user, name, birth, gender, profile_image").From("dev.profile").Where("user_id", userId).ToString()
-	db.QueryRow(query).Scan(
+	psql.db.QueryRow(query).Scan(
 		&profile.User, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage)
 
 	return profile

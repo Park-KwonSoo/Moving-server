@@ -1,7 +1,7 @@
 package models
 
 type Music struct {
-	basicType
+	baseType
 	Title       string
 	Artist      string
 	Album       string
