@@ -1,9 +1,27 @@
 package errhandler
 
-import (
-	"errors"
-)
+type ErrorRslt struct {
+	RsltCd  string
+	RsltMsg string
+}
 
-func NotFoundErr() error {
-	return errors.New("Not Found Error")
+func AuthorizedErr() ErrorRslt {
+	return ErrorRslt{
+		RsltCd:  "01",
+		RsltMsg: "Authorized",
+	}
+}
+
+func NotFoundErr() ErrorRslt {
+	return ErrorRslt{
+		RsltCd:  "04",
+		RsltMsg: "Not Found",
+	}
+}
+
+func ConflictErr() ErrorRslt {
+	return ErrorRslt{
+		RsltCd:  "09",
+		RsltMsg: "Conflict",
+	}
 }
