@@ -28,10 +28,20 @@ func checkError(err error) {
 	}
 }
 
-func migrate() bool {
-	userMigrate() //유저 정보 migrate
+func migrate() error {
+	err := userMigrate()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	} //유저 정보 migrate
 
-	return true
+	err = musicMigrate() //음악 정보 migrate
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	return nil
 }
 
 func GetDB() dbms {
@@ -56,10 +66,11 @@ func Connect() {
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Seoul",
 		psql.host, psql.port, psql.user, psql.password, psql.dbName)
 
-	//gorm을 이용해 postgres를 오픈한다. schema를 지정하는 옵션은 gorm.Config에 존재
-	// dbSchema := os.Getenv("DB_SCHEMA")
-
-	//글로벌 변수를 초기화 하기 위해서는 := 대신 = 를 사용해야 한다!
+	//타입이 정해진 변수 초기화는 := 가 아닌 =를 사용
+	/*
+	* := => 타입까지 지정
+	* = => 타입이 정해진 value에 대입
+	 */
 	var err error
 	psql.db, err = sql.Open("postgres", psqlconn)
 	checkError(err)

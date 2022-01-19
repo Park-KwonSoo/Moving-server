@@ -1,7 +1,6 @@
 package jwtutility
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -28,7 +27,7 @@ func GetJwtToken(userId string) (string, error) {
 	signedToken, err := token.SignedString([]byte(jwtSecretKey))
 
 	if err != nil {
-		return "", fmt.Errorf("token signed error")
+		return "", err
 	}
 
 	return signedToken, nil
@@ -37,12 +36,12 @@ func GetJwtToken(userId string) (string, error) {
 //token의 유효성 검증 및 decode
 func ValidateToken(tokenString string) (string, error) {
 	claims := &accessToken{}
-	rslt, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	rslt, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecretKey), nil
 	})
 
 	if !rslt.Valid {
-		return "", fmt.Errorf("validate token failed")
+		return "", err
 	}
 
 	return claims.UserId, nil

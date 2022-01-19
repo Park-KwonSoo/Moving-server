@@ -5,10 +5,13 @@ PROTOC = protoc -I=. \
 PROTO_DIR_V1 = api/protos/v1
 PROTO_DIR_V2 = api/protos/v2
 
-all : login register
+all : login register user
 
 login :
 	$(PROTOC) $(PROTO_DIR_V1)/auth/login.proto
 
 register :
 	${PROTOC} $(PROTO_DIR_V1)/auth/register.proto
+
+user :
+	${PROTOC} ${PROTO_DIR_V1}/user/user.proto

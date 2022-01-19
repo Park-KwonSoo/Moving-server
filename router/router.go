@@ -9,6 +9,9 @@ import (
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
 	auth_service "github.com/Park-Kwonsoo/moving-server/services/auth"
+
+	userpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/user"
+	user_service "github.com/Park-Kwonsoo/moving-server/services/user"
 )
 
 const (
@@ -25,6 +28,8 @@ func SetupRouter() {
 
 	authpb.RegisterRegisterServiceServer(s, &auth_service.RegisterServer{})
 	authpb.RegisterLoginServiceServer(s, &auth_service.LoginServer{})
+
+	userpb.RegisterUserServiceServer(s, &user_service.UserServer{})
 
 	reflection.Register(s)
 

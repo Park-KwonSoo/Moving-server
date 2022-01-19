@@ -3,12 +3,13 @@ package auth_service
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
 
+	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
+
 	db "github.com/Park-Kwonsoo/moving-server/models"
-	jwtutility "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
+	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 )
 
 type LoginServer struct {
@@ -20,14 +21,43 @@ type RegisterServer struct {
 }
 
 func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) (*authpb.RegisterRes, error) {
-	db.CreateNewUser(db.User{
+
+	user := db.User{
 		UserId: sql.NullString{
 			String: req.UserId,
 			Valid:  true,
 		},
 		Password: req.Password,
 		UserType: req.RegisterType,
-	})
+	}
+
+	err := db.CreateNewUser(user)
+	if err != nil {
+		e := errHandler.ConflictErr()
+
+		return &authpb.RegisterRes{
+			RsltMsg: e.RsltMsg,
+			RsltCd:  e.RsltCd,
+		}, nil
+	}
+
+	profile := db.Profile{
+		User:         user,
+		Name:         req.Name,
+		Birth:        req.Birth,
+		Gender:       req.Gender,
+		ProfileImage: req.ProfileImg,
+	}
+
+	err = db.CreateNewProfile(profile)
+	if err != nil {
+		e := errHandler.ConflictErr()
+
+		return &authpb.RegisterRes{
+			RsltMsg: e.RsltMsg,
+			RsltCd:  e.RsltCd,
+		}, nil
+	}
 
 	return &authpb.RegisterRes{
 		RsltMsg: "Success",
@@ -40,32 +70,38 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 
 	userId := req.UserId
 
-	user := db.FindUserByUserId(userId)
-	if user == nil {
+	user, err := db.FindUserByUserId(userId)
+	if err != nil {
+		e := errHandler.NotFoundErr()
+
 		return &authpb.LoginRes{
-			RsltCd:  "88",
-			RsltMsg: "Not Found User",
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
 			Token:   "",
 		}, nil
 	}
 
-	isValidatePw := user.ValidatePassword(req.Password)
+	isValidatePw, err := user.ValidatePassword(req.Password)
 	if !isValidatePw {
+		e := errHandler.AuthorizedErr()
+
 		return &authpb.LoginRes{
-			RsltCd:  "77",
-			RsltMsg: "Not Authorized",
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
 			Token:   "",
 		}, nil
 	}
 
-	token, err := jwtutility.GetJwtToken(userId)
+	token, err := jwtUtil.GetJwtToken(userId)
 
 	if err != nil {
+		e := errHandler.AuthorizedErr()
+
 		return &authpb.LoginRes{
-			RsltCd:  "99",
-			RsltMsg: "Login Failed",
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
 			Token:   "",
-		}, fmt.Errorf("login error")
+		}, nil
 	}
 
 	return &authpb.LoginRes{
