@@ -136,7 +136,18 @@ func (q *query) Value(v []string) *query {
 
 	var b bytes.Buffer
 	b.WriteString("(")
-	b.WriteString(strings.Join(v, ", "))
+
+	r := make([]string, len(v))
+	for i := 0; i < len(v); i++ {
+		var t bytes.Buffer
+		t.WriteString("'")
+		t.WriteString(v[i])
+		t.WriteString("'")
+
+		r[i] = t.String()
+	}
+
+	b.WriteString(strings.Join(r, ", "))
 	b.WriteString(")")
 
 	q.QUERY_WHERE_VALUE = b.String()
