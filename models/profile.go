@@ -9,7 +9,7 @@ import (
 
 type Profile struct {
 	baseType
-	User         User
+	User         User   `db:"user_id int references user(id)"`
 	Name         string `db:"name varchar(255)"`
 	Birth        string `db:"birth varchar(10)"`
 	Gender       string `db:"gender varchar(6)"`
@@ -70,12 +70,10 @@ func FindProfileById(id uint) (*Profile, error) {
 
 func FindProfileByUserId(userId string) (*Profile, error) {
 
-	user := &User{}
-	query := qb.Select("id, user_id, user_type").From("user").Where("user_id", userId).ToString()
-	psql.db.QueryRow(query).Scan(
-		&user.ID, &user.UserId, &user.UserType,
-	)
-
+	user, err := FindUserByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
 	if !user.UserId.Valid {
 		err := errors.New("Not Found")
 		return nil, err
@@ -84,7 +82,7 @@ func FindProfileByUserId(userId string) (*Profile, error) {
 	profile := &Profile{}
 	profile.User = *user
 
-	query = qb.Select("id, name, birth, gender, profile_image").From("profile").Where("user_id", userId).ToString()
+	query := qb.Select("id, name, birth, gender, profile_image").From("profile").Where("user_id", userId).ToString()
 	psql.db.QueryRow(query).Scan(
 		&profile.ID, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage,
 	)

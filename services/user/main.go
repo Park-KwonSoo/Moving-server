@@ -15,22 +15,10 @@ type UserServer struct {
 	userpb.UserServiceServer
 }
 
-func (s *UserServer) GetMyProfile(ctx context.Context, req *userpb.GetMyProfileReq) (*userpb.GetMyProfileRes, error) {
-	userId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
-		e := errHandler.AuthorizedErr()
+//profile 리턴 값을 가져오는 메서드
+func getProfileReturnType(e errHandler.ErrorRslt, profile *db.Profile) (*userpb.GetMyProfileRes, error) {
 
-		return &userpb.GetMyProfileRes{
-			RsltCd:    e.RsltCd,
-			RsltMsg:   e.RsltMsg,
-			MyProfile: nil,
-		}, nil
-	}
-
-	profile, err := db.FindProfileByUserId(userId)
 	if profile == nil {
-		e := errHandler.NotFoundErr()
-
 		return &userpb.GetMyProfileRes{
 			RsltCd:    e.RsltCd,
 			RsltMsg:   e.RsltMsg,
@@ -50,7 +38,7 @@ func (s *UserServer) GetMyProfile(ctx context.Context, req *userpb.GetMyProfileR
 			User: &userpb.User{
 				Id:        int32(profile.User.ID),
 				CreatedAt: profile.User.CreatedAt.String(),
-				UpdatedAt: profile.User.UpdatedAt.GoString(),
+				UpdatedAt: profile.User.UpdatedAt.String(),
 				DeletedAt: profile.User.DeletedAt.String(),
 
 				UserId:   profile.User.UserId.String,
@@ -63,4 +51,21 @@ func (s *UserServer) GetMyProfile(ctx context.Context, req *userpb.GetMyProfileR
 			ProfileImg: profile.ProfileImage,
 		},
 	}, nil
+}
+
+/*
+* Get My Profile
+ */
+func (s *UserServer) GetMyProfile(ctx context.Context, req *userpb.GetMyProfileReq) (*userpb.GetMyProfileRes, error) {
+	userId, err := jwtUtil.ValidateToken(req.Token)
+	if err != nil {
+		return getProfileReturnType(errHandler.AuthorizedErr(), nil)
+	}
+
+	profile, err := db.FindProfileByUserId(userId)
+	if profile == nil {
+		return getProfileReturnType(errHandler.NotFoundErr(), nil)
+	}
+
+	return getProfileReturnType(errHandler.ErrorRslt{}, profile)
 }

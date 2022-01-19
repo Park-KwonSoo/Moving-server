@@ -13,11 +13,9 @@ import (
 
 type User struct {
 	baseType
-	ProfileId      uint           `db:"profile_id int references profile(id)"`
-	UserPlaylistId uint           `db:"user_playlist_id int references userPlaylist(id)"`
-	UserId         sql.NullString `db:"user_id varchar(255) unique not null"`
-	UserType       string         `db:"user_type varchar(10) not null"`
-	Password       string         `db:"password varchar(2000) not null"`
+	UserId   sql.NullString `db:"user_id varchar(255) unique not null"`
+	UserType string         `db:"user_type varchar(10) not null"`
+	Password string         `db:"password varchar(2000) not null"`
 }
 
 //테이블 생성
@@ -78,9 +76,9 @@ func (u *User) ValidatePassword(pw string) (bool, error) {
 func FindUserById(id uint) (*User, error) {
 	user := &User{}
 
-	query := qb.Select("id, user_id, user_type, password").From("user").Where("id", id).ToString()
+	query := qb.Select("id, created_at, updated_at, user_id, user_type, password").From("user").Where("id", id).ToString()
 	psql.db.QueryRow(query).Scan(
-		&user.ID, &user.UserId, &user.UserType, &user.Password,
+		&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.UserId, &user.UserType, &user.Password,
 	)
 
 	if !user.UserId.Valid {
@@ -94,9 +92,9 @@ func FindUserById(id uint) (*User, error) {
 func FindUserByUserId(userId string) (*User, error) {
 	user := &User{}
 
-	query := qb.Select("id, user_id, user_type, password").From("user").Where("user_id", userId).ToString()
+	query := qb.Select("id, created_at, updated_at, user_id, user_type, password").From("user").Where("user_id", userId).ToString()
 	psql.db.QueryRow(query).Scan(
-		&user.ID, &user.UserId, &user.UserType, &user.Password,
+		&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.UserId, &user.UserType, &user.Password,
 	)
 
 	if !user.UserId.Valid {
