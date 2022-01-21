@@ -62,7 +62,7 @@ func (s *UserServer) GetMyProfile(ctx context.Context, req *userpb.GetMyProfileR
 		return getProfileReturnType(errHandler.AuthorizedErr(), nil)
 	}
 
-	profile, err := db.FindProfileByUserId(userId)
+	profile, err := db.FindProfileByUserUserId(userId)
 	if profile == nil {
 		return getProfileReturnType(errHandler.NotFoundErr(), nil)
 	}

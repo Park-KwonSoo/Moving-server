@@ -1,9 +1,9 @@
 package models
 
 import (
-	"reflect"
 	"strings"
 
+	getTag "github.com/Park-Kwonsoo/moving-server/pkg/get-struct-info"
 	qb "github.com/Park-Kwonsoo/moving-server/pkg/query-builder"
 )
 
@@ -21,28 +21,14 @@ type Music struct {
 
 //music migrate
 func musicMigrate() error {
-	m := Music{}
 
-	trackNumber, _ := reflect.TypeOf(m).FieldByName("TrackNumber")
-	title, _ := reflect.TypeOf(m).FieldByName("Title")
-	artist, _ := reflect.TypeOf(m).FieldByName("Artist")
-	album, _ := reflect.TypeOf(m).FieldByName("Album")
-	albumImg, _ := reflect.TypeOf(m).FieldByName("AlbumImg")
-	genre, _ := reflect.TypeOf(m).FieldByName("Genre")
-	musicUrl, _ := reflect.TypeOf(m).FieldByName("MusicUrl")
-	isTitle, _ := reflect.TypeOf(m).FieldByName("IsTitle")
+	column := make([]string, 0)
+	column = append(column, strings.Join(getCreatedTableColumn(), ", "))
+	column = append(column, getTag.GetStructInfoByTag("db", &Music{})...)
 
-	query := qb.CreateTable("music").TableComlumn([]string{
-		strings.Join(getCreatedTableColumn(), ", "),
-		trackNumber.Tag.Get("db"),
-		title.Tag.Get("db"),
-		artist.Tag.Get("db"),
-		album.Tag.Get("db"),
-		albumImg.Tag.Get("db"),
-		genre.Tag.Get("db"),
-		musicUrl.Tag.Get("db"),
-		isTitle.Tag.Get("db"),
-	}).ToString()
+	query := qb.CreateTable("music").TableComlumn(
+		column...,
+	).ToString()
 
 	_, err := psql.db.Exec(query)
 

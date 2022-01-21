@@ -22,7 +22,7 @@ type RegisterServer struct {
 
 func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) (*authpb.RegisterRes, error) {
 
-	user := db.User{
+	user := &db.User{
 		UserId: sql.NullString{
 			String: req.UserId,
 			Valid:  true,
@@ -41,8 +41,10 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		}, nil
 	}
 
-	profile := db.Profile{
-		User:         user,
+	user, err = db.FindUserByUserId(req.UserId)
+
+	profile := &db.Profile{
+		User:         *user,
 		Name:         req.Name,
 		Birth:        req.Birth,
 		Gender:       req.Gender,

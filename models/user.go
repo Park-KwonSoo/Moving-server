@@ -2,11 +2,11 @@ package models
 
 import (
 	"errors"
-	"reflect"
 	"strings"
 
 	"database/sql"
 
+	getTag "github.com/Park-Kwonsoo/moving-server/pkg/get-struct-info"
 	hashPassword "github.com/Park-Kwonsoo/moving-server/pkg/hashing-password"
 	qb "github.com/Park-Kwonsoo/moving-server/pkg/query-builder"
 )
@@ -21,18 +21,13 @@ type User struct {
 //테이블 생성
 func userMigrate() error {
 
-	u := User{}
+	column := make([]string, 0)
+	column = append(column, strings.Join(getCreatedTableColumn(), ", "))
+	column = append(column, getTag.GetStructInfoByTag("db", &User{})...)
 
-	userId, _ := reflect.TypeOf(u).FieldByName("UserId")
-	userType, _ := reflect.TypeOf(u).FieldByName("UserType")
-	password, _ := reflect.TypeOf(u).FieldByName("Password")
-
-	query := qb.CreateTable("user").TableComlumn([]string{
-		strings.Join(getCreatedTableColumn(), ", "),
-		userId.Tag.Get("db"),
-		userType.Tag.Get("db"),
-		password.Tag.Get("db"),
-	}).ToString()
+	query := qb.CreateTable("user").TableComlumn(
+		column...,
+	).ToString()
 
 	_, err := psql.db.Exec(query)
 
@@ -40,7 +35,7 @@ func userMigrate() error {
 }
 
 //새 유저 등록 : C
-func CreateNewUser(user User) error {
+func CreateNewUser(user *User) error {
 
 	existUser, _ := FindUserByUserId(user.UserId.String)
 	if existUser != nil {
@@ -51,11 +46,11 @@ func CreateNewUser(user User) error {
 	hashed, _ := hashPassword.GenerateHashPassword(user.Password)
 
 	//해쉬 비밀번호 생성된 데이터를 넣는다.
-	query := qb.Insert("user", "user_id, user_type, password").Value([]string{
+	query := qb.Insert("user", "user_id, user_type, password").Value(
 		user.UserId.String,
 		user.UserType,
 		hashed,
-	}).ToString()
+	).ToString()
 
 	//toDo : 새 유저를 생성하는 쿼리 필요
 	_, err := psql.db.Exec(query)

@@ -29,13 +29,23 @@ func checkError(err error) {
 }
 
 func migrate() error {
+
+	//유저 정보 migrate
 	err := userMigrate()
 	if err != nil {
 		fmt.Println(err)
 		return err
-	} //유저 정보 migrate
+	}
 
-	err = musicMigrate() //음악 정보 migrate
+	//Profile 정보 migrate
+	err = profileMigrate()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	//음악 정보 migrate
+	err = musicMigrate()
 	if err != nil {
 		fmt.Println(err)
 		return err

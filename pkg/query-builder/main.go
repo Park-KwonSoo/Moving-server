@@ -54,7 +54,7 @@ func CreateTable(t string) *query {
 }
 
 //table의 column 정보로 쿼리 생성
-func (q *query) TableComlumn(opt []string) *query {
+func (q *query) TableComlumn(opt ...string) *query {
 
 	q.QUERY_TABLE_VALUE = fmt.Sprintf("(%s)", strings.Join(opt, ", "))
 
@@ -130,7 +130,7 @@ func Insert(t string, c string) *query {
 }
 
 //추가할 데이터의 column에 대한 value 값을 받는다.
-func (q *query) Value(v []string) *query {
+func (q *query) Value(v ...string) *query {
 
 	q.QUERY_WHERE = VALUE
 
