@@ -10,13 +10,14 @@ import (
 
 type Profile struct {
 	baseType
-	User         User   `db:"user_user_id varchar(255) references dev.user(user_id)"`
+	Member       Member `db:"member_mem_id varchar(255) references member(mem_id)" mapping:"one2one member"`
 	Name         string `db:"name varchar(255)"`
 	Birth        string `db:"birth varchar(10)"`
 	Gender       string `db:"gender varchar(6)"`
 	ProfileImage string `db:"profile_img varchar(2000)"`
 }
 
+//profile migrate
 func profileMigrate() error {
 
 	column := make([]string, 0)
@@ -35,39 +36,40 @@ func profileMigrate() error {
 //새 프로필 생성
 func CreateNewProfile(profile *Profile) error {
 
-	existProfile, _ := FindProfileByUserUserId(profile.User.UserId.String)
+	existProfile, _ := FindProfileByMemberMemId(profile.Member.MemId.String)
 	if existProfile != nil {
 		return errors.New("Conflict")
 	}
 
-	query := qb.Insert("profile", "name, birth, gender, profile_img, user_user_id").Value(
+	query := qb.Insert("profile", "name, birth, gender, profile_img, member_mem_id").Value(
 		profile.Name,
 		profile.Birth,
 		profile.Gender,
 		profile.ProfileImage,
-		profile.User.UserId.String,
+		profile.Member.MemId.String,
 	).ToString()
 
-	//toDo : make profile -> join with User
+	//toDo : make profile -> join with member
 	_, err := psql.db.Exec(query)
 
 	return err
 }
 
+//profile id로 프로필 가져오기
 func FindProfileById(id uint) (*Profile, error) {
 
 	profile := &Profile{}
-	var userId string //유저 아이디 저장
+	var memId string //유저 아이디 저장
 
-	query := qb.Select("id, creatd_at, updated_at, name, birth, gender, profile_img, user_user_id").From("profile").Where("id", id).ToString()
+	query := qb.Select("id, creatd_at, updated_at, name, birth, gender, profile_img, member_mem_id").From("profile").Where("id", id).ToString()
 	psql.db.QueryRow(query).Scan(
-		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage, &userId,
+		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage, &memId,
 	)
 
-	user, _ := FindUserByUserId(userId)
-	profile.User = *user
+	member, _ := FindMemberByMemId(memId)
+	profile.Member = *member
 
-	if !profile.User.UserId.Valid {
+	if !profile.Member.MemId.Valid {
 		err := errors.New("Not Found")
 		return nil, err
 	}
@@ -75,21 +77,22 @@ func FindProfileById(id uint) (*Profile, error) {
 	return profile, nil
 }
 
-func FindProfileByUserUserId(userId string) (*Profile, error) {
+//member id로 프로필 가져오기
+func FindProfileByMemberMemId(memId string) (*Profile, error) {
 
-	user, err := FindUserByUserId(userId)
+	member, err := FindMemberByMemId(memId)
 	if err != nil {
 		return nil, err
 	}
-	if !user.UserId.Valid {
+	if !member.MemId.Valid {
 		err := errors.New("Not Found")
 		return nil, err
 	}
 
 	profile := &Profile{}
-	profile.User = *user
+	profile.Member = *member
 
-	query := qb.Select("id, created_at, updated_at, name, birth, gender, profile_img").From("profile").Where("user_user_id", userId).ToString()
+	query := qb.Select("id, created_at, updated_at, name, birth, gender, profile_img").From("profile").Where("member_mem_id", memId).ToString()
 	psql.db.QueryRow(query).Scan(
 		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage,
 	)
@@ -100,4 +103,18 @@ func FindProfileByUserUserId(userId string) (*Profile, error) {
 	}
 
 	return profile, nil
+}
+
+func UpdateOneProfile(profile *Profile) error {
+
+	query := qb.Update("profile").Set("name, birth, gender, profile_img", []string{
+		profile.Name,
+		profile.Birth,
+		profile.Gender,
+		profile.ProfileImage,
+	}).Where("id", profile.ID).ToString()
+
+	_, err := psql.db.Exec(query)
+
+	return err
 }

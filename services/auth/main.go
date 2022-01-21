@@ -22,16 +22,16 @@ type RegisterServer struct {
 
 func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) (*authpb.RegisterRes, error) {
 
-	user := &db.User{
-		UserId: sql.NullString{
-			String: req.UserId,
+	member := &db.Member{
+		MemId: sql.NullString{
+			String: req.MemId,
 			Valid:  true,
 		},
 		Password: req.Password,
-		UserType: req.RegisterType,
+		MemType:  req.RegisterType,
 	}
 
-	err := db.CreateNewUser(user)
+	err := db.CreateNewMember(member)
 	if err != nil {
 		e := errHandler.ConflictErr()
 
@@ -41,10 +41,10 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		}, nil
 	}
 
-	user, err = db.FindUserByUserId(req.UserId)
+	member, err = db.FindMemberByMemId(req.MemId)
 
 	profile := &db.Profile{
-		User:         *user,
+		Member:       *member,
 		Name:         req.Name,
 		Birth:        req.Birth,
 		Gender:       req.Gender,
@@ -70,9 +70,9 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 
 func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.LoginRes, error) {
 
-	userId := req.UserId
+	memId := req.MemId
 
-	user, err := db.FindUserByUserId(userId)
+	member, err := db.FindMemberByMemId(memId)
 	if err != nil {
 		e := errHandler.NotFoundErr()
 
@@ -83,7 +83,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 		}, nil
 	}
 
-	isValidatePw, err := user.ValidatePassword(req.Password)
+	isValidatePw, err := member.ValidatePassword(req.Password)
 	if !isValidatePw {
 		e := errHandler.AuthorizedErr()
 
@@ -94,7 +94,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 		}, nil
 	}
 
-	token, err := jwtUtil.GetJwtToken(userId)
+	token, err := jwtUtil.GetJwtToken(memId)
 
 	if err != nil {
 		e := errHandler.AuthorizedErr()

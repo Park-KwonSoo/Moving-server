@@ -1,8 +1,9 @@
 package models
 
 import (
-	"reflect"
 	"time"
+
+	getTag "github.com/Park-Kwonsoo/moving-server/pkg/get-struct-info"
 )
 
 type baseType struct {
@@ -14,17 +15,9 @@ type baseType struct {
 
 //BaseType의 create table시 사용할 컬럼 옵션 리턴
 func getCreatedTableColumn() []string {
-	b := baseType{}
 
-	id, _ := reflect.TypeOf(b).FieldByName("ID")
-	createdAt, _ := reflect.TypeOf(b).FieldByName("CreatedAt")
-	updatedAt, _ := reflect.TypeOf(b).FieldByName("UpdatedAt")
-	deletedAt, _ := reflect.TypeOf(b).FieldByName("DeletedAt")
+	column := make([]string, 0)
+	column = append(column, getTag.GetStructInfoByTag("db", &baseType{})...)
 
-	return []string{
-		id.Tag.Get("db"),
-		createdAt.Tag.Get("db"),
-		updatedAt.Tag.Get("db"),
-		deletedAt.Tag.Get("db"),
-	}
+	return column
 }

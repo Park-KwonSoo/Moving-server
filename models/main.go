@@ -31,7 +31,7 @@ func checkError(err error) {
 func migrate() error {
 
 	//유저 정보 migrate
-	err := userMigrate()
+	err := memberMigrate()
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -44,8 +44,22 @@ func migrate() error {
 		return err
 	}
 
+	//멤버 플레이리스트 생성
+	err = memberPlaylistMigrate()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
 	//음악 정보 migrate
 	err = musicMigrate()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	//플레이리스트 migrate
+	err = playlistMigrate()
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -54,10 +68,14 @@ func migrate() error {
 	return nil
 }
 
+//return dbms
 func GetDB() dbms {
 	return psql
 }
 
+/*
+* connect to PsqlDB
+ */
 func Connect() {
 
 	//env 파일 로딩
@@ -67,22 +85,18 @@ func Connect() {
 	//psql db
 	psql.host = "localhost"
 	psql.port = 5432
-	psql.user = os.Getenv("USER")
-	psql.password = os.Getenv("PASSWORD")
+	psql.user = os.Getenv("DB_USER")
+	psql.password = os.Getenv("DB_PASSWORD")
 	psql.dbName = os.Getenv("DB_NAME")
 
 	//postgresql 환경을 설정
 	psqlconn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Seoul",
-		psql.host, psql.port, psql.user, psql.password, psql.dbName)
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Seoul search_path=%s",
+		psql.host, psql.port, psql.user, psql.password, psql.dbName, os.Getenv("DB_SCHEMA"))
 
-	//타입이 정해진 변수 초기화는 := 가 아닌 =를 사용
-	/*
-	* := => 타입까지 지정
-	* = => 타입이 정해진 value에 대입
-	 */
 	var err error
 	psql.db, err = sql.Open("postgres", psqlconn)
+
 	checkError(err)
 	fmt.Println("db Connected!")
 

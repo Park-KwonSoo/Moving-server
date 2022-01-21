@@ -17,7 +17,7 @@ service LoginService {
 
 message LoginReq {
     string loginType = 1;
-    string userId = 2;
+    string memId = 2;
     string password = 3;
 }
 

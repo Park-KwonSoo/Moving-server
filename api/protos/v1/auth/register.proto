@@ -17,7 +17,7 @@ service RegisterService {
 
 message RegisterReq {
     string registerType = 1;
-    string userId = 2;
+    string memId = 2;
     string password = 3;
     string passwordCheck = 4;
     

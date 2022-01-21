@@ -14,13 +14,13 @@ type accessToken struct {
 	UserId string `json:"userId"`
 }
 
-//userId를 바탕으로 token을 발급
-func GetJwtToken(userId string) (string, error) {
+//memId를 바탕으로 token을 발급
+func GetJwtToken(memId string) (string, error) {
 	claims := &accessToken{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(), //30일 토큰
 		},
-		UserId: userId,
+		UserId: memId,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
