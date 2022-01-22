@@ -53,18 +53,46 @@ func getProfileReturnType(e errHandler.ErrorRslt, profile *db.Profile) (*memberp
 	}, nil
 }
 
+//playlist return type
+func getPlaylistReturnType(e errHandler.ErrorRslt, playlist []*db.Playlist) (*memberpb.GetMyPlaylistRes, error) {
+
+	if playlist == nil {
+		return &memberpb.GetMyPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, nil
+	}
+
+	myPlayList := make([]*memberpb.Playlist, 0)
+	for i := 0; i < len(playlist); i++ {
+		myPlayList = append(myPlayList, &memberpb.Playlist{
+			Id:           uint64(playlist[i].ID),
+			CreatedAt:    playlist[i].CreatedAt.String(),
+			UpdatedAt:    playlist[i].UpdatedAt.String(),
+			PlaylistName: playlist[i].PlaylistName,
+			NumOfMusics:  uint64(len(playlist[i].Music)),
+		})
+	}
+
+	return &memberpb.GetMyPlaylistRes{
+		RsltCd:     "00",
+		RsltMsg:    "Success",
+		MyPlaylist: myPlayList,
+	}, nil
+}
+
 /*
 * Get My Profile
  */
 func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProfileReq) (*memberpb.GetMyProfileRes, error) {
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
-		return getProfileReturnType(errHandler.AuthorizedErr(), nil)
+		return getProfileReturnType(errHandler.AuthorizedErr("GetMyProfile : Validate Token Error"), nil)
 	}
 
-	profile, err := db.FindProfileByMemberMemId(memId)
+	profile, err := db.FindOneProfileByMemberMemId(memId)
 	if profile == nil {
-		return getProfileReturnType(errHandler.NotFoundErr(), nil)
+		return getProfileReturnType(errHandler.NotFoundErr("GetMyProfile : Not Found User's Profile"), nil)
 	}
 
 	return getProfileReturnType(errHandler.ErrorRslt{}, profile)
@@ -77,17 +105,21 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
+		e := errHandler.AuthorizedErr("UpdateMyProfile : Validate Token Error")
+
 		return &memberpb.UpdateMyProfileRes{
-			RsltCd:  "01",
-			RsltMsg: "Authorization",
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
 		}, nil
 	}
 
-	profile, err := db.FindProfileByMemberMemId(memId)
+	profile, err := db.FindOneProfileByMemberMemId(memId)
 	if profile == nil {
+		e := errHandler.NotFoundErr("UpdateMyProfile : Not Found User's Profile")
+
 		return &memberpb.UpdateMyProfileRes{
-			RsltCd:  "04",
-			RsltMsg: "NotFound",
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
 		}, nil
 	}
 
@@ -113,9 +145,11 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 
 	err = db.UpdateOneProfile(profile)
 	if err != nil {
+		e := errHandler.ForbiddenErr("UpdateMyProfile : Forbidden")
+
 		return &memberpb.UpdateMyProfileRes{
-			RsltCd:  "99",
-			RsltMsg: "Failure",
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
 		}, nil
 	}
 
@@ -128,10 +162,17 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 /*
 * Get My Playlist
  */
-
 func (s *MemberServer) GetMyPlaylist(ctx context.Context, req *memberpb.GetMyPlaylistReq) (*memberpb.GetMyPlaylistRes, error) {
-	return &memberpb.GetMyPlaylistRes{
-		RsltCd:  "00",
-		RsltMsg: "Success",
-	}, nil
+
+	memId, err := jwtUtil.ValidateToken(req.Token)
+	if err != nil {
+		return getPlaylistReturnType(errHandler.AuthorizedErr("GetMyPlaylist : Validate Token Error"), nil)
+	}
+
+	myPlaylist, err := db.FindAllPlaylistByMemberMemId(memId)
+	if err != nil {
+		return getPlaylistReturnType(errHandler.NotFoundErr("GetMyPlaylist : Not Found User's Playlist"), nil)
+	}
+
+	return getPlaylistReturnType(errHandler.ErrorRslt{}, myPlaylist)
 }

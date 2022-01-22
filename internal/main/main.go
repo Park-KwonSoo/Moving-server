@@ -13,7 +13,10 @@ func main() {
 	wait.Add(1)
 
 	go func() {
-		defer wait.Done()
+		defer func() {
+			db.Disconnect()
+			wait.Done()
+		}()
 		db.Connect()
 		Router.SetupRouter()
 	}()

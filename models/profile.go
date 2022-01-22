@@ -28,15 +28,24 @@ func profileMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.db.Exec(query)
+	_, err := psql.Exec(query)
+	if err != nil {
+		return err
+	}
 
+	err = createUpdateTrigger("profile")
+	if err != nil {
+		return err
+	}
+
+	err = tableMapping(&Profile{})
 	return err
 }
 
 //새 프로필 생성
 func CreateNewProfile(profile *Profile) error {
 
-	existProfile, _ := FindProfileByMemberMemId(profile.Member.MemId.String)
+	existProfile, _ := FindOneProfileByMemberMemId(profile.Member.MemId.String)
 	if existProfile != nil {
 		return errors.New("Conflict")
 	}
@@ -50,23 +59,23 @@ func CreateNewProfile(profile *Profile) error {
 	).ToString()
 
 	//toDo : make profile -> join with member
-	_, err := psql.db.Exec(query)
+	_, err := psql.Exec(query)
 
 	return err
 }
 
-//profile id로 프로필 가져오기
-func FindProfileById(id uint) (*Profile, error) {
+//profile id로 프로필 1개 가져오기
+func FindOneProfileById(id uint) (*Profile, error) {
 
 	profile := &Profile{}
 	var memId string //유저 아이디 저장
 
 	query := qb.Select("id, creatd_at, updated_at, name, birth, gender, profile_img, member_mem_id").From("profile").Where("id", id).ToString()
-	psql.db.QueryRow(query).Scan(
+	psql.QueryRow(query).Scan(
 		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage, &memId,
 	)
 
-	member, _ := FindMemberByMemId(memId)
+	member, _ := FindOneMemberByMemId(memId)
 	profile.Member = *member
 
 	if !profile.Member.MemId.Valid {
@@ -78,9 +87,9 @@ func FindProfileById(id uint) (*Profile, error) {
 }
 
 //member id로 프로필 가져오기
-func FindProfileByMemberMemId(memId string) (*Profile, error) {
+func FindOneProfileByMemberMemId(memId string) (*Profile, error) {
 
-	member, err := FindMemberByMemId(memId)
+	member, err := FindOneMemberByMemId(memId)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +102,7 @@ func FindProfileByMemberMemId(memId string) (*Profile, error) {
 	profile.Member = *member
 
 	query := qb.Select("id, created_at, updated_at, name, birth, gender, profile_img").From("profile").Where("member_mem_id", memId).ToString()
-	psql.db.QueryRow(query).Scan(
+	psql.QueryRow(query).Scan(
 		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage,
 	)
 
@@ -114,7 +123,7 @@ func UpdateOneProfile(profile *Profile) error {
 		profile.ProfileImage,
 	}).Where("id", profile.ID).ToString()
 
-	_, err := psql.db.Exec(query)
+	_, err := psql.Exec(query)
 
 	return err
 }

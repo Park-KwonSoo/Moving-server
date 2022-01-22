@@ -1,27 +1,51 @@
 package errhandler
 
+import "log"
+
 type ErrorRslt struct {
 	RsltCd  string
 	RsltMsg string
 }
 
-func AuthorizedErr() ErrorRslt {
+func PanicErr(err error) {
+	if err != nil {
+		log.Println(err)
+		panic(err)
+	}
+}
+
+func AuthorizedErr(req ...interface{}) ErrorRslt {
+	//toDo : logging
+	log.Println(req...)
 	return ErrorRslt{
 		RsltCd:  "01",
 		RsltMsg: "Authorized",
 	}
 }
 
-func NotFoundErr() ErrorRslt {
+func NotFoundErr(req ...interface{}) ErrorRslt {
+	//toDo : logging
+	log.Println(req...)
 	return ErrorRslt{
 		RsltCd:  "04",
 		RsltMsg: "Not Found",
 	}
 }
 
-func ConflictErr() ErrorRslt {
+func ConflictErr(req ...interface{}) ErrorRslt {
+	//toDo : logging
+	log.Println(req...)
+	return ErrorRslt{
+		RsltCd:  "03",
+		RsltMsg: "Conflict",
+	}
+}
+
+func ForbiddenErr(req ...interface{}) ErrorRslt {
+	//toDo : logging
+	log.Println(req...)
 	return ErrorRslt{
 		RsltCd:  "09",
-		RsltMsg: "Conflict",
+		RsltMsg: "Forbidden",
 	}
 }

@@ -30,14 +30,32 @@ func musicMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.db.Exec(query)
+	_, err := psql.Exec(query)
+	if err != nil {
+		return err
+	}
 
+	err = createUpdateTrigger("music")
+	if err != nil {
+		return err
+	}
+
+	err = tableMapping(&Music{})
 	return err
 }
 
-func FindMusicById(id uint) *Music {
-	music := Music{}
-	// db.db(&Music{}).First(music, "ID = ?", id)
+/**
+*	id로 음악 찾기
+ */
+func FindOneMusicById(id uint) (*Music, error) {
+	music := &Music{}
+	query := qb.Select("id, created_at, track_number, title, artist, album, album_img, genre, music_url, is_title").From("music").Where("id", id).ToString()
 
-	return &music
+	if err := psql.QueryRow(query).Scan(
+		&music.ID, &music.CreatedAt, &music.TrackNumber, &music.Title, &music.Artist, &music.Album, &music.AlbumImg, &music.Genre, &music.MusicUrl, &music.IsTitle,
+	); err != nil {
+		return nil, err
+	}
+
+	return music, nil
 }

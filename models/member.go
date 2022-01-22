@@ -29,15 +29,24 @@ func memberMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.db.Exec(query)
+	_, err := psql.Exec(query)
+	if err != nil {
+		return err
+	}
 
+	err = createUpdateTrigger("member")
+	if err != nil {
+		return err
+	}
+
+	err = tableMapping(&Member{})
 	return err
 }
 
 //새 유저 등록 : C
 func CreateNewMember(member *Member) error {
 
-	existMember, _ := FindMemberByMemId(member.MemId.String)
+	existMember, _ := FindOneMemberByMemId(member.MemId.String)
 	if existMember != nil {
 		return errors.New("Conflict")
 	}
@@ -53,7 +62,7 @@ func CreateNewMember(member *Member) error {
 	).ToString()
 
 	//toDo : 새 유저를 생성하는 쿼리 필요
-	_, err := psql.db.Exec(query)
+	_, err := psql.Exec(query)
 
 	return err
 }
@@ -67,12 +76,27 @@ func (m *Member) ValidatePassword(pw string) (bool, error) {
 	return valid, nil
 }
 
+//패스워드 변경
+func (m *Member) ChangePassword(pw string) error {
+
+	hashed, _ := hashPassword.GenerateHashPassword(pw)
+	m.Password = hashed
+
+	query := qb.Update("member").Set("password", []string{
+		m.Password,
+	}).Where("id", m.ID).ToString()
+
+	_, err := psql.Exec(query)
+
+	return err
+}
+
 //아래부턴 쿼리
-func FindMemberById(id uint) (*Member, error) {
+func FindOneMemberById(id uint) (*Member, error) {
 	member := &Member{}
 
 	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, password").From("member").Where("id", id).ToString()
-	psql.db.QueryRow(query).Scan(
+	psql.QueryRow(query).Scan(
 		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.Password,
 	)
 
@@ -84,11 +108,11 @@ func FindMemberById(id uint) (*Member, error) {
 	return member, nil
 }
 
-func FindMemberByMemId(memId string) (*Member, error) {
+func FindOneMemberByMemId(memId string) (*Member, error) {
 	member := &Member{}
 
 	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, password").From("member").Where("mem_id", memId).ToString()
-	psql.db.QueryRow(query).Scan(
+	psql.QueryRow(query).Scan(
 		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.Password,
 	)
 

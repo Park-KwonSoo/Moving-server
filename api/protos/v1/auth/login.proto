@@ -13,6 +13,9 @@ service LoginService {
         //     body : "request"
         // };
     };
+
+    rpc PasswordCheck(PasswordCheckReq) returns (PasswordCheckRes) {};
+    rpc PasswordChange(PasswordChangeReq) returns (PasswordChangeRes) {};
 }
 
 message LoginReq {
@@ -25,4 +28,25 @@ message LoginRes {
     string rsltCd = 1;
     string rsltMsg = 2;
     string token = 3;
+}
+
+message PasswordCheckReq {
+    string token = 1;
+    string oldPassword = 2;
+}
+
+message PasswordCheckRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    bool isChecked = 3;
+}
+
+message PasswordChangeReq {
+    string token = 1;
+    string newPassword = 2;
+}
+
+message PasswordChangeRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
 }

@@ -60,12 +60,9 @@ message UpdateMyProfileRes {
 message Playlist {
     uint64 id = 1;
     uint64 numOfMusics = 2;
-    string playlistName = 3;
-}
-
-message MyPlaylist {
-    uint64 id = 1;
-    repeated Playlist playlist = 3;
+    string createdAt = 3;
+    string updatedAt = 4;
+    string playlistName = 5;
 }
 
 message GetMyPlaylistReq {
@@ -75,5 +72,5 @@ message GetMyPlaylistReq {
 message GetMyPlaylistRes {
     string rsltCd = 1;
     string rsltMsg = 2;
-    MyPlaylist myPlaylist = 3;
+    repeated Playlist myPlaylist = 3;
 }

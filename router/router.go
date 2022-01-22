@@ -18,6 +18,14 @@ const (
 	port = ":9000"
 )
 
+//service 등록
+func registerService(s *grpc.Server) {
+	authpb.RegisterRegisterServiceServer(s, &auth_service.RegisterServer{})
+	authpb.RegisterLoginServiceServer(s, &auth_service.LoginServer{})
+
+	memberpb.RegisterMemberServiceServer(s, &member_service.MemberServer{})
+}
+
 func SetupRouter() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -25,12 +33,7 @@ func SetupRouter() {
 	}
 
 	s := grpc.NewServer()
-
-	authpb.RegisterRegisterServiceServer(s, &auth_service.RegisterServer{})
-	authpb.RegisterLoginServiceServer(s, &auth_service.LoginServer{})
-
-	memberpb.RegisterMemberServiceServer(s, &member_service.MemberServer{})
-
+	registerService(s)
 	reflection.Register(s)
 
 	log.Printf("Start gRPC Server on %s server", port)

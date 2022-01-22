@@ -33,7 +33,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 
 	err := db.CreateNewMember(member)
 	if err != nil {
-		e := errHandler.ConflictErr()
+		e := errHandler.ConflictErr("Register : Conflict")
 
 		return &authpb.RegisterRes{
 			RsltMsg: e.RsltMsg,
@@ -41,7 +41,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		}, nil
 	}
 
-	member, err = db.FindMemberByMemId(req.MemId)
+	member, err = db.FindOneMemberByMemId(req.MemId)
 
 	profile := &db.Profile{
 		Member:       *member,
@@ -53,7 +53,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 
 	err = db.CreateNewProfile(profile)
 	if err != nil {
-		e := errHandler.ConflictErr()
+		e := errHandler.ConflictErr("Register : Conflict")
 
 		return &authpb.RegisterRes{
 			RsltMsg: e.RsltMsg,
@@ -72,9 +72,9 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 
 	memId := req.MemId
 
-	member, err := db.FindMemberByMemId(memId)
+	member, err := db.FindOneMemberByMemId(memId)
 	if err != nil {
-		e := errHandler.NotFoundErr()
+		e := errHandler.NotFoundErr("Login : Not Found User")
 
 		return &authpb.LoginRes{
 			RsltCd:  e.RsltCd,
@@ -85,7 +85,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 
 	isValidatePw, err := member.ValidatePassword(req.Password)
 	if !isValidatePw {
-		e := errHandler.AuthorizedErr()
+		e := errHandler.AuthorizedErr("Login : Failed Password")
 
 		return &authpb.LoginRes{
 			RsltCd:  e.RsltCd,
@@ -97,7 +97,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 	token, err := jwtUtil.GetJwtToken(memId)
 
 	if err != nil {
-		e := errHandler.AuthorizedErr()
+		e := errHandler.AuthorizedErr("Login : Token Authorized")
 
 		return &authpb.LoginRes{
 			RsltCd:  e.RsltCd,
@@ -110,5 +110,74 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 		RsltCd:  "00",
 		RsltMsg: "Success",
 		Token:   token,
+	}, nil
+}
+
+func (s *LoginServer) PasswordCheck(ctx context.Context, req *authpb.PasswordCheckReq) (*authpb.PasswordCheckRes, error) {
+
+	memId, err := jwtUtil.ValidateToken(req.Token)
+	if err != nil {
+		e := errHandler.AuthorizedErr("PasswordCheck : Validate Token Error")
+
+		return &authpb.PasswordCheckRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, nil
+	}
+
+	member, err := db.FindOneMemberByMemId(memId)
+	if err != nil {
+		e := errHandler.NotFoundErr("PasswordCheck : Not Found User")
+
+		return &authpb.PasswordCheckRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, nil
+	}
+
+	isChecked, err := member.ValidatePassword(req.OldPassword)
+
+	return &authpb.PasswordCheckRes{
+		RsltCd:    "00",
+		RsltMsg:   "Success",
+		IsChecked: isChecked,
+	}, nil
+}
+
+func (s *LoginServer) PasswordChange(ctx context.Context, req *authpb.PasswordChangeReq) (*authpb.PasswordChangeRes, error) {
+
+	memId, err := jwtUtil.ValidateToken(req.Token)
+	if err != nil {
+		e := errHandler.AuthorizedErr("PasswordChange : Validate Token Error")
+
+		return &authpb.PasswordChangeRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, nil
+	}
+
+	member, err := db.FindOneMemberByMemId(memId)
+	if err != nil {
+		e := errHandler.NotFoundErr("PasswordChange : Not Found User")
+
+		return &authpb.PasswordChangeRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, nil
+	}
+
+	err = member.ChangePassword(req.NewPassword)
+	if err != nil {
+		e := errHandler.ForbiddenErr("PasswordChange : Forbidden")
+
+		return &authpb.PasswordChangeRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, nil
+	}
+
+	return &authpb.PasswordChangeRes{
+		RsltCd:  "00",
+		RsltMsg: "Success",
 	}, nil
 }
