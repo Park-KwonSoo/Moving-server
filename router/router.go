@@ -12,6 +12,9 @@ import (
 
 	memberpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/member"
 	member_service "github.com/Park-Kwonsoo/moving-server/services/member"
+
+	playlistpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/playlist"
+	playlist_service "github.com/Park-Kwonsoo/moving-server/services/playlist"
 )
 
 const (
@@ -24,8 +27,11 @@ func registerService(s *grpc.Server) {
 	authpb.RegisterLoginServiceServer(s, &auth_service.LoginServer{})
 
 	memberpb.RegisterMemberServiceServer(s, &member_service.MemberServer{})
+
+	playlistpb.RegisterPlaylistServiceServer(s, &playlist_service.PlaylistServer{})
 }
 
+//grpc Router 등록
 func SetupRouter() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {

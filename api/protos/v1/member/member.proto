@@ -7,7 +7,6 @@ option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/member"
 service MemberService {
     rpc GetMyProfile(GetMyProfileReq) returns (GetMyProfileRes) {};
     rpc UpdateMyProfile(UpdateMyProfileReq) returns (UpdateMyProfileRes) {};
-    rpc GetMyPlaylist(GetMyPlaylistReq) returns (GetMyPlaylistRes) {};
 }
 
 message Member {
@@ -55,22 +54,4 @@ message UpdateMyProfileReq {
 message UpdateMyProfileRes {
     string rsltCd = 1;
     string rsltMsg = 2;
-}
-
-message Playlist {
-    uint64 id = 1;
-    uint64 numOfMusics = 2;
-    string createdAt = 3;
-    string updatedAt = 4;
-    string playlistName = 5;
-}
-
-message GetMyPlaylistReq {
-    string token = 1;
-}
-
-message GetMyPlaylistRes {
-    string rsltCd = 1;
-    string rsltMsg = 2;
-    repeated Playlist myPlaylist = 3;
 }
