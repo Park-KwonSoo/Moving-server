@@ -33,7 +33,6 @@ message Profile {
 }
 
 message GetMyProfileReq {
-    string token = 1;
 }
 
 message GetMyProfileRes {
@@ -43,12 +42,11 @@ message GetMyProfileRes {
 }
 
 message UpdateMyProfileReq {
-    string token = 1;
-    string name = 2;
-    string mobile = 3;
-    string gender = 4;
-    string birth = 5;
-    string profile_img = 6;
+    string name = 1;
+    string mobile = 2;
+    string gender = 3;
+    string birth = 4;
+    string profile_img = 5;
 }
 
 message UpdateMyProfileRes {

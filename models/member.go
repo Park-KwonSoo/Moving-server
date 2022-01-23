@@ -13,9 +13,10 @@ import (
 
 type Member struct {
 	baseType
-	MemId    sql.NullString `db:"mem_id varchar(255) unique not null"`
-	MemType  string         `db:"mem_type varchar(10) not null"`
-	Password string         `db:"password varchar(2000) not null"`
+	MemId       sql.NullString `db:"mem_id varchar(255) unique not null"`
+	MemType     string         `db:"mem_type varchar(10) not null"`                      // LOCAL | GOOGLE | KAKAO | NAVER | etc..
+	MemPosition string         `db:"mem_position varchar(20) not null default 'NORMAL'"` //관리자, 일반 유저, 등
+	Password    string         `db:"password varchar(2000) not null"`
 }
 
 //member migrate
@@ -29,17 +30,15 @@ func memberMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.Exec(query)
-	if err != nil {
+	if _, err := psql.Exec(query); err != nil {
 		return err
 	}
 
-	err = createUpdateTrigger("member")
-	if err != nil {
+	if err := createUpdateTrigger("member"); err != nil {
 		return err
 	}
 
-	err = tableMapping(&Member{})
+	err := tableMapping(&Member{})
 	return err
 }
 
@@ -78,14 +77,17 @@ func (m *Member) ValidatePassword(pw string) (bool, error) {
 //패스워드 변경
 func (m *Member) ChangePassword(pw string) error {
 
-	hashed, _ := hashPassword.GenerateHashPassword(pw)
+	hashed, err := hashPassword.GenerateHashPassword(pw)
+	if err != nil {
+		return err
+	}
 	m.Password = hashed
 
 	query := qb.Update("member").Set("password", []string{
 		m.Password,
 	}).Where("id", m.ID).ToString()
 
-	_, err := psql.Exec(query)
+	_, err = psql.Exec(query)
 
 	return err
 }

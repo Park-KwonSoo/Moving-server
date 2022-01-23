@@ -26,17 +26,15 @@ func playlistMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.Exec(query)
-	if err != nil {
+	if _, err := psql.Exec(query); err != nil {
 		return err
 	}
 
-	err = createUpdateTrigger("playlist")
-	if err != nil {
+	if err := createUpdateTrigger("playlist"); err != nil {
 		return err
 	}
 	//테이블을 매핑함
-	err = tableMapping(&Playlist{})
+	err := tableMapping(&Playlist{})
 	return err
 }
 

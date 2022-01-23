@@ -2,13 +2,13 @@ package member_service
 
 import (
 	"context"
+	"fmt"
 
 	memberpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/member"
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
 	db "github.com/Park-Kwonsoo/moving-server/models"
-	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 )
 
 type MemberServer struct {
@@ -57,14 +57,15 @@ func getProfileReturnType(e errHandler.ErrorRslt, code error, profile *db.Profil
 * Get My Profile
  */
 func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProfileReq) (*memberpb.GetMyProfileRes, error) {
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
+
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("GetMyProfile : Validate Token Error")
 		return getProfileReturnType(e, code, nil)
 	}
 
 	profile, err := db.FindOneProfileByMemberMemId(memId)
-	if profile == nil {
+	if profile == nil || err != nil {
 		e, code := errHandler.NotFoundErr("GetMyProfile : Not Found User's Profile")
 		return getProfileReturnType(e, code, nil)
 	}
@@ -77,8 +78,8 @@ func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProf
  */
 func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.UpdateMyProfileReq) (*memberpb.UpdateMyProfileRes, error) {
 
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("UpdateMyProfile : Validate Token Error")
 
 		return &memberpb.UpdateMyProfileRes{

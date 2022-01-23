@@ -10,6 +10,9 @@ service MusicService {
     
     //키워드를 바탕으로 일치하는 키워드를 가진 곡의 정보를 가져옴
     rpc GetMusicByKeyword(GetMusicByKeywordReq) returns (GetMusicByKeywordRes) {};
+
+    //새로운 음악 파일을 등록함 : 관리자만 사용 가능
+    rpc AddNewMusic(stream AddNewMusicReq) returns (AddNewMusicRes) {};
 }
 
 message Music {
@@ -44,4 +47,14 @@ message GetMusicByKeywordRes {
     string rsltCd = 1;
     string rsltMsg = 2;
     repeated Music searchResult = 3;
+}
+
+
+message AddNewMusicReq {
+    bytes music = 2;
+}
+
+message AddNewMusicRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
 }

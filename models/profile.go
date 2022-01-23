@@ -28,17 +28,15 @@ func profileMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.Exec(query)
-	if err != nil {
+	if _, err := psql.Exec(query); err != nil {
 		return err
 	}
 
-	err = createUpdateTrigger("profile")
-	if err != nil {
+	if err := createUpdateTrigger("profile"); err != nil {
 		return err
 	}
 
-	err = tableMapping(&Profile{})
+	err := tableMapping(&Profile{})
 	return err
 }
 

@@ -1,17 +1,21 @@
 package router
 
 import (
+	"context"
 	"log"
 	"net"
 
 	"github.com/sirupsen/logrus"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
 	auth_service "github.com/Park-Kwonsoo/moving-server/services/auth"
@@ -29,6 +33,21 @@ import (
 const (
 	port = ":9000"
 )
+
+//유저 인증 JWT 토큰을 Interceptor : token값을 decode하여 memId를 전달
+func authInterceptor(ctx context.Context) (context.Context, error) {
+
+	token, _ := grpc_auth.AuthFromMD(ctx, "bearer")
+	if len(token) == 0 {
+		newCtx := context.WithValue(ctx, "memId", "")
+		return newCtx, nil
+	}
+
+	memId, _ := jwtUtil.ValidateToken(token)
+
+	newCtx := context.WithValue(ctx, "memId", memId)
+	return newCtx, nil
+}
 
 //service 등록
 func registerService(s *grpc.Server) {
@@ -57,6 +76,9 @@ func SetupRouter() {
 	s := grpc.NewServer(
 		//unary server interceptor middleware
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			//auth interceptor
+			grpc_auth.UnaryServerInterceptor(authInterceptor),
+
 			//logging interceptor
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 

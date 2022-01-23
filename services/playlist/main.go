@@ -3,13 +3,13 @@ package playlist_service
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	playlistpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/playlist"
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
 	db "github.com/Park-Kwonsoo/moving-server/models"
-	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 )
 
 type PlaylistServer struct {
@@ -91,8 +91,8 @@ func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylis
  */
 func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetMyPlaylistReq) (*playlistpb.GetMyPlaylistRes, error) {
 
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("GetMyPlaylist : Validate Token Error")
 		return getPlaylistReturnType(e, code, nil)
 	}
@@ -125,8 +125,8 @@ func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistp
  */
 func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.CreateNewPlaylistReq) (*playlistpb.CreateNewPlaylistRes, error) {
 
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("CreateNewPlaylist : Authorized User")
 
 		return &playlistpb.CreateNewPlaylistRes{
@@ -144,7 +144,7 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
 		},
 	}
 
-	err = db.CreateNewPlaylist(playlist)
+	err := db.CreateNewPlaylist(playlist)
 	if err != nil {
 		e, code := errHandler.BadRequestErr("CreateNewPlaylist : Bad Request")
 
@@ -164,8 +164,9 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
 *	Update Playlist
  */
 func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.UpdatePlaylistReq) (*playlistpb.UpdatePlaylistRes, error) {
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
+
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
 
 		return &playlistpb.UpdatePlaylistRes{
@@ -209,9 +210,28 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
  */
 func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlistpb.AddNewMusicInPlaylistReq) (*playlistpb.AddNewMusicInPlaylistRes, error) {
 
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
+		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
+
+		return &playlistpb.AddNewMusicInPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
 	playlist, err := db.FindOnePlaylistById(uint(req.PlayListId))
 	if err != nil {
 		e, code := errHandler.NotFoundErr("AddNewMusicInPlaylist : Not Found Playlist")
+
+		return &playlistpb.AddNewMusicInPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	if memId != playlist.Member.MemId.String {
+		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
 
 		return &playlistpb.AddNewMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,

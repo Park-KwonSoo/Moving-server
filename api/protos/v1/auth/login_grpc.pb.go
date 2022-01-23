@@ -22,8 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LoginServiceClient interface {
+	//로그인 api
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginRes, error)
+	//비밀번호를 입력받아, 올바른 비밀번호인지의 여부를 리턴함
 	PasswordCheck(ctx context.Context, in *PasswordCheckReq, opts ...grpc.CallOption) (*PasswordCheckRes, error)
+	//새로운 비밀번호로 비밀번호를 변경함
 	PasswordChange(ctx context.Context, in *PasswordChangeReq, opts ...grpc.CallOption) (*PasswordChangeRes, error)
 }
 
@@ -66,8 +69,11 @@ func (c *loginServiceClient) PasswordChange(ctx context.Context, in *PasswordCha
 // All implementations must embed UnimplementedLoginServiceServer
 // for forward compatibility
 type LoginServiceServer interface {
+	//로그인 api
 	Login(context.Context, *LoginReq) (*LoginRes, error)
+	//비밀번호를 입력받아, 올바른 비밀번호인지의 여부를 리턴함
 	PasswordCheck(context.Context, *PasswordCheckReq) (*PasswordCheckRes, error)
+	//새로운 비밀번호로 비밀번호를 변경함
 	PasswordChange(context.Context, *PasswordChangeReq) (*PasswordChangeRes, error)
 	mustEmbedUnimplementedLoginServiceServer()
 }

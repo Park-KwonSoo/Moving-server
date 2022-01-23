@@ -3,6 +3,7 @@ package auth_service
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
 
@@ -21,6 +22,15 @@ type RegisterServer struct {
 }
 
 func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) (*authpb.RegisterRes, error) {
+
+	if req.Password != req.PasswordCheck {
+		e, code := errHandler.BadRequestErr("Register : Password Not Equal")
+
+		return &authpb.RegisterRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
 
 	member := &db.Member{
 		MemId: sql.NullString{
@@ -110,9 +120,9 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 
 func (s *LoginServer) PasswordCheck(ctx context.Context, req *authpb.PasswordCheckReq) (*authpb.PasswordCheckRes, error) {
 
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
-		e, code := errHandler.AuthorizedErr("PasswordCheck : Validate Token Error")
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
+		e, code := errHandler.AuthorizedErr("JWT Token Validate : Authorized Error")
 
 		return &authpb.PasswordCheckRes{
 			RsltCd:  e.RsltCd,
@@ -141,9 +151,9 @@ func (s *LoginServer) PasswordCheck(ctx context.Context, req *authpb.PasswordChe
 
 func (s *LoginServer) PasswordChange(ctx context.Context, req *authpb.PasswordChangeReq) (*authpb.PasswordChangeRes, error) {
 
-	memId, err := jwtUtil.ValidateToken(req.Token)
-	if err != nil {
-		e, code := errHandler.AuthorizedErr("PasswordChange : Validate Token Error")
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
+		e, code := errHandler.AuthorizedErr("JWT Token Validate : Authorized Error")
 
 		return &authpb.PasswordChangeRes{
 			RsltCd:  e.RsltCd,

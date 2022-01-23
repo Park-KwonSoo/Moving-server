@@ -33,7 +33,6 @@ message SimplePlaylist {
 }
 
 message GetMyPlaylistReq {
-    string token = 1;
 }
 
 message GetMyPlaylistRes {
@@ -77,8 +76,7 @@ message GetSpecificPlaylistRes {
 
 
 message CreateNewPlaylistReq {
-    string token = 1;
-    string playlistName = 2;
+    string playlistName = 1;
 }
 
 message CreateNewPlaylistRes {
@@ -88,9 +86,8 @@ message CreateNewPlaylistRes {
 
 
 message UpdatePlaylistReq {
-    string token = 1;
-    string playlistName = 2;
-    uint64 playlistId = 3;
+    string playlistName = 1;
+    uint64 playlistId = 2;
 }
 
 message UpdatePlaylistRes {
@@ -100,10 +97,8 @@ message UpdatePlaylistRes {
 
 
 message AddNewMusicInPlaylistReq {
-    string token = 1;
-
-    uint64 playListId = 2;
-    repeated uint64 musicIdList = 3;
+    uint64 playListId = 1;
+    repeated uint64 musicIdList = 2;
 }
 
 message AddNewMusicInPlaylistRes {
@@ -113,10 +108,8 @@ message AddNewMusicInPlaylistRes {
 
 
 message RemoveMusicInPlaylistReq {
-    string token = 1;
-
-    uint64 playListId = 2;
-    repeated uint64 musicIdList = 3;
+    uint64 playListId = 1;
+    repeated uint64 musicIdList = 2;
 }
 
 message RemoveMusicInPlaylistRes {

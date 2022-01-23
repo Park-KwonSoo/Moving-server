@@ -26,6 +26,8 @@ type MusicServiceClient interface {
 	GetMusicDetail(ctx context.Context, in *GetMusicDetailReq, opts ...grpc.CallOption) (*GetMusicDetailRes, error)
 	//키워드를 바탕으로 일치하는 키워드를 가진 곡의 정보를 가져옴
 	GetMusicByKeyword(ctx context.Context, in *GetMusicByKeywordReq, opts ...grpc.CallOption) (*GetMusicByKeywordRes, error)
+	//새로운 음악 파일을 등록함 : 관리자만 사용 가능
+	AddNewMusic(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewMusicClient, error)
 }
 
 type musicServiceClient struct {
@@ -54,6 +56,40 @@ func (c *musicServiceClient) GetMusicByKeyword(ctx context.Context, in *GetMusic
 	return out, nil
 }
 
+func (c *musicServiceClient) AddNewMusic(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewMusicClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MusicService_ServiceDesc.Streams[0], "/v1.music_proto.MusicService/AddNewMusic", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &musicServiceAddNewMusicClient{stream}
+	return x, nil
+}
+
+type MusicService_AddNewMusicClient interface {
+	Send(*AddNewMusicReq) error
+	CloseAndRecv() (*AddNewMusicRes, error)
+	grpc.ClientStream
+}
+
+type musicServiceAddNewMusicClient struct {
+	grpc.ClientStream
+}
+
+func (x *musicServiceAddNewMusicClient) Send(m *AddNewMusicReq) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *musicServiceAddNewMusicClient) CloseAndRecv() (*AddNewMusicRes, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(AddNewMusicRes)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MusicServiceServer is the server API for MusicService service.
 // All implementations must embed UnimplementedMusicServiceServer
 // for forward compatibility
@@ -62,6 +98,8 @@ type MusicServiceServer interface {
 	GetMusicDetail(context.Context, *GetMusicDetailReq) (*GetMusicDetailRes, error)
 	//키워드를 바탕으로 일치하는 키워드를 가진 곡의 정보를 가져옴
 	GetMusicByKeyword(context.Context, *GetMusicByKeywordReq) (*GetMusicByKeywordRes, error)
+	//새로운 음악 파일을 등록함 : 관리자만 사용 가능
+	AddNewMusic(MusicService_AddNewMusicServer) error
 	mustEmbedUnimplementedMusicServiceServer()
 }
 
@@ -74,6 +112,9 @@ func (UnimplementedMusicServiceServer) GetMusicDetail(context.Context, *GetMusic
 }
 func (UnimplementedMusicServiceServer) GetMusicByKeyword(context.Context, *GetMusicByKeywordReq) (*GetMusicByKeywordRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMusicByKeyword not implemented")
+}
+func (UnimplementedMusicServiceServer) AddNewMusic(MusicService_AddNewMusicServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddNewMusic not implemented")
 }
 func (UnimplementedMusicServiceServer) mustEmbedUnimplementedMusicServiceServer() {}
 
@@ -124,6 +165,32 @@ func _MusicService_GetMusicByKeyword_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MusicService_AddNewMusic_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MusicServiceServer).AddNewMusic(&musicServiceAddNewMusicServer{stream})
+}
+
+type MusicService_AddNewMusicServer interface {
+	SendAndClose(*AddNewMusicRes) error
+	Recv() (*AddNewMusicReq, error)
+	grpc.ServerStream
+}
+
+type musicServiceAddNewMusicServer struct {
+	grpc.ServerStream
+}
+
+func (x *musicServiceAddNewMusicServer) SendAndClose(m *AddNewMusicRes) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *musicServiceAddNewMusicServer) Recv() (*AddNewMusicReq, error) {
+	m := new(AddNewMusicReq)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MusicService_ServiceDesc is the grpc.ServiceDesc for MusicService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -140,6 +207,12 @@ var MusicService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MusicService_GetMusicByKeyword_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "AddNewMusic",
+			Handler:       _MusicService_AddNewMusic_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "api/protos/v1/music/music.proto",
 }

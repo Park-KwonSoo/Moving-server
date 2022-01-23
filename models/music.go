@@ -30,17 +30,15 @@ func musicMigrate() error {
 		column...,
 	).ToString()
 
-	_, err := psql.Exec(query)
-	if err != nil {
+	if _, err := psql.Exec(query); err != nil {
 		return err
 	}
 
-	err = createUpdateTrigger("music")
-	if err != nil {
+	if err := createUpdateTrigger("music"); err != nil {
 		return err
 	}
 
-	err = tableMapping(&Music{})
+	err := tableMapping(&Music{})
 	return err
 }
 
