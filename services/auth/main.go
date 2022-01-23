@@ -41,8 +41,6 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		}, nil
 	}
 
-	member, err = db.FindOneMemberByMemId(req.MemId)
-
 	profile := &db.Profile{
 		Member:       *member,
 		Name:         req.Name,

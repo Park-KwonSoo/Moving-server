@@ -22,7 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PlaylistServiceClient interface {
+	//내 플레이리스트 목록 조회
 	GetMyPlaylist(ctx context.Context, in *GetMyPlaylistReq, opts ...grpc.CallOption) (*GetMyPlaylistRes, error)
+	//특정 플레이리스트 조회
+	GetSpecificPlaylist(ctx context.Context, in *GetSpecificPlaylistReq, opts ...grpc.CallOption) (*GetSpecificPlaylistRes, error)
+	//새 플레이리스트 생성
+	CreateNewPlaylist(ctx context.Context, in *CreateNewPlaylistReq, opts ...grpc.CallOption) (*CreateNewPlaylistRes, error)
+	//기존 플레이리스트 정보 업데이트
+	UpdatePlaylist(ctx context.Context, in *UpdatePlaylistReq, opts ...grpc.CallOption) (*UpdatePlaylistRes, error)
+	//특정 플레이리스트에 곡 추가
+	AddNewMusicInPlaylist(ctx context.Context, in *AddNewMusicInPlaylistReq, opts ...grpc.CallOption) (*AddNewMusicInPlaylistRes, error)
+	//특정 플레이리스트에서 곡 제거
+	RemoveMusicInPlaylist(ctx context.Context, in *RemoveMusicInPlaylistReq, opts ...grpc.CallOption) (*RemoveMusicInPlaylistRes, error)
 }
 
 type playlistServiceClient struct {
@@ -42,11 +53,67 @@ func (c *playlistServiceClient) GetMyPlaylist(ctx context.Context, in *GetMyPlay
 	return out, nil
 }
 
+func (c *playlistServiceClient) GetSpecificPlaylist(ctx context.Context, in *GetSpecificPlaylistReq, opts ...grpc.CallOption) (*GetSpecificPlaylistRes, error) {
+	out := new(GetSpecificPlaylistRes)
+	err := c.cc.Invoke(ctx, "/v1.playlist_proto.PlaylistService/GetSpecificPlaylist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playlistServiceClient) CreateNewPlaylist(ctx context.Context, in *CreateNewPlaylistReq, opts ...grpc.CallOption) (*CreateNewPlaylistRes, error) {
+	out := new(CreateNewPlaylistRes)
+	err := c.cc.Invoke(ctx, "/v1.playlist_proto.PlaylistService/CreateNewPlaylist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playlistServiceClient) UpdatePlaylist(ctx context.Context, in *UpdatePlaylistReq, opts ...grpc.CallOption) (*UpdatePlaylistRes, error) {
+	out := new(UpdatePlaylistRes)
+	err := c.cc.Invoke(ctx, "/v1.playlist_proto.PlaylistService/UpdatePlaylist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playlistServiceClient) AddNewMusicInPlaylist(ctx context.Context, in *AddNewMusicInPlaylistReq, opts ...grpc.CallOption) (*AddNewMusicInPlaylistRes, error) {
+	out := new(AddNewMusicInPlaylistRes)
+	err := c.cc.Invoke(ctx, "/v1.playlist_proto.PlaylistService/AddNewMusicInPlaylist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *playlistServiceClient) RemoveMusicInPlaylist(ctx context.Context, in *RemoveMusicInPlaylistReq, opts ...grpc.CallOption) (*RemoveMusicInPlaylistRes, error) {
+	out := new(RemoveMusicInPlaylistRes)
+	err := c.cc.Invoke(ctx, "/v1.playlist_proto.PlaylistService/RemoveMusicInPlaylist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlaylistServiceServer is the server API for PlaylistService service.
 // All implementations must embed UnimplementedPlaylistServiceServer
 // for forward compatibility
 type PlaylistServiceServer interface {
+	//내 플레이리스트 목록 조회
 	GetMyPlaylist(context.Context, *GetMyPlaylistReq) (*GetMyPlaylistRes, error)
+	//특정 플레이리스트 조회
+	GetSpecificPlaylist(context.Context, *GetSpecificPlaylistReq) (*GetSpecificPlaylistRes, error)
+	//새 플레이리스트 생성
+	CreateNewPlaylist(context.Context, *CreateNewPlaylistReq) (*CreateNewPlaylistRes, error)
+	//기존 플레이리스트 정보 업데이트
+	UpdatePlaylist(context.Context, *UpdatePlaylistReq) (*UpdatePlaylistRes, error)
+	//특정 플레이리스트에 곡 추가
+	AddNewMusicInPlaylist(context.Context, *AddNewMusicInPlaylistReq) (*AddNewMusicInPlaylistRes, error)
+	//특정 플레이리스트에서 곡 제거
+	RemoveMusicInPlaylist(context.Context, *RemoveMusicInPlaylistReq) (*RemoveMusicInPlaylistRes, error)
 	mustEmbedUnimplementedPlaylistServiceServer()
 }
 
@@ -56,6 +123,21 @@ type UnimplementedPlaylistServiceServer struct {
 
 func (UnimplementedPlaylistServiceServer) GetMyPlaylist(context.Context, *GetMyPlaylistReq) (*GetMyPlaylistRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMyPlaylist not implemented")
+}
+func (UnimplementedPlaylistServiceServer) GetSpecificPlaylist(context.Context, *GetSpecificPlaylistReq) (*GetSpecificPlaylistRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSpecificPlaylist not implemented")
+}
+func (UnimplementedPlaylistServiceServer) CreateNewPlaylist(context.Context, *CreateNewPlaylistReq) (*CreateNewPlaylistRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateNewPlaylist not implemented")
+}
+func (UnimplementedPlaylistServiceServer) UpdatePlaylist(context.Context, *UpdatePlaylistReq) (*UpdatePlaylistRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePlaylist not implemented")
+}
+func (UnimplementedPlaylistServiceServer) AddNewMusicInPlaylist(context.Context, *AddNewMusicInPlaylistReq) (*AddNewMusicInPlaylistRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddNewMusicInPlaylist not implemented")
+}
+func (UnimplementedPlaylistServiceServer) RemoveMusicInPlaylist(context.Context, *RemoveMusicInPlaylistReq) (*RemoveMusicInPlaylistRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMusicInPlaylist not implemented")
 }
 func (UnimplementedPlaylistServiceServer) mustEmbedUnimplementedPlaylistServiceServer() {}
 
@@ -88,6 +170,96 @@ func _PlaylistService_GetMyPlaylist_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlaylistService_GetSpecificPlaylist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSpecificPlaylistReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlaylistServiceServer).GetSpecificPlaylist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.playlist_proto.PlaylistService/GetSpecificPlaylist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlaylistServiceServer).GetSpecificPlaylist(ctx, req.(*GetSpecificPlaylistReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlaylistService_CreateNewPlaylist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateNewPlaylistReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlaylistServiceServer).CreateNewPlaylist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.playlist_proto.PlaylistService/CreateNewPlaylist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlaylistServiceServer).CreateNewPlaylist(ctx, req.(*CreateNewPlaylistReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlaylistService_UpdatePlaylist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePlaylistReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlaylistServiceServer).UpdatePlaylist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.playlist_proto.PlaylistService/UpdatePlaylist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlaylistServiceServer).UpdatePlaylist(ctx, req.(*UpdatePlaylistReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlaylistService_AddNewMusicInPlaylist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddNewMusicInPlaylistReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlaylistServiceServer).AddNewMusicInPlaylist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.playlist_proto.PlaylistService/AddNewMusicInPlaylist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlaylistServiceServer).AddNewMusicInPlaylist(ctx, req.(*AddNewMusicInPlaylistReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlaylistService_RemoveMusicInPlaylist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveMusicInPlaylistReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlaylistServiceServer).RemoveMusicInPlaylist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.playlist_proto.PlaylistService/RemoveMusicInPlaylist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlaylistServiceServer).RemoveMusicInPlaylist(ctx, req.(*RemoveMusicInPlaylistReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlaylistService_ServiceDesc is the grpc.ServiceDesc for PlaylistService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +270,26 @@ var PlaylistService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMyPlaylist",
 			Handler:    _PlaylistService_GetMyPlaylist_Handler,
+		},
+		{
+			MethodName: "GetSpecificPlaylist",
+			Handler:    _PlaylistService_GetSpecificPlaylist_Handler,
+		},
+		{
+			MethodName: "CreateNewPlaylist",
+			Handler:    _PlaylistService_CreateNewPlaylist_Handler,
+		},
+		{
+			MethodName: "UpdatePlaylist",
+			Handler:    _PlaylistService_UpdatePlaylist_Handler,
+		},
+		{
+			MethodName: "AddNewMusicInPlaylist",
+			Handler:    _PlaylistService_AddNewMusicInPlaylist_Handler,
+		},
+		{
+			MethodName: "RemoveMusicInPlaylist",
+			Handler:    _PlaylistService_RemoveMusicInPlaylist_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

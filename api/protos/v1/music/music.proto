@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package v1.music_proto;
+
+option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/music";
+
+service MusicService {
+    //한 곡의 상세 정보를 가져옴
+    rpc GetMusicDetail(GetMusicDetailReq) returns (GetMusicDetailRes) {};
+    
+    //키워드를 바탕으로 일치하는 키워드를 가진 곡의 정보를 가져옴
+    rpc GetMusicByKeyword(GetMusicByKeywordReq) returns (GetMusicByKeywordRes) {};
+}
+
+message Music {
+    uint64 musicId = 1;
+    uint64 trackNumber = 2;
+
+    string title = 3;
+    string artist = 4;
+    string album = 5;
+    string genre = 6;
+    string albumImg = 7;
+    string musicUrl = 8;
+
+    bool isTitle = 9;
+}
+
+message GetMusicDetailReq {
+    uint64 musicId = 1;
+}
+
+message GetMusicDetailRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    Music music = 3;
+}
+
+message GetMusicByKeywordReq {
+    string keyword = 1;
+}
+
+message GetMusicByKeywordRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    repeated Music searchResult = 3;
+}

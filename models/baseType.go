@@ -14,6 +14,7 @@ type baseType struct {
 	CreatedAt time.Time `db:"created_at timestamp not null default now()"`
 	UpdatedAt time.Time `db:"updated_at timestamp not null default now()"`
 	DeletedAt time.Time `db:"deleted_at timestamp default null"`
+	UseYn     string    `db:"use_yn varchar(2) default 'Y'"`
 }
 
 //BaseType의 create table시 사용할 컬럼 옵션 리턴

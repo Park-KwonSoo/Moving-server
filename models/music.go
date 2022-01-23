@@ -13,8 +13,8 @@ type Music struct {
 	Title       string `db:"title varchar(200) not null"`
 	Artist      string `db:"artist varchar(200) not null"`
 	Album       string `db:"album varchar(200) not null"`
-	AlbumImg    string `db:"album_img varchar(2000) not null"`
 	Genre       string `db:"genre varchar(200) not null"`
+	AlbumImg    string `db:"album_img varchar(2000) not null"`
 	MusicUrl    string `db:"music_url varchar(2000) unique not null"`
 	IsTitle     bool   `db:"is_title boolean not null"`
 }
@@ -58,4 +58,14 @@ func FindOneMusicById(id uint) (*Music, error) {
 	}
 
 	return music, nil
+}
+
+/**
+*	키워드로 음악 찾기
+ */
+func FindAllMusicByKeyword(keyword string) ([]*Music, error) {
+	musicList := make([]*Music, 0)
+	// query := qb.Select("id, create_at, tracknumber, title, artist, album, genre, album_img, music_url, is_title").From("music").ToString()
+
+	return musicList, nil
 }

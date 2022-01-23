@@ -5,10 +5,26 @@ package v1.playlist_proto;
 option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/playlist";
 
 service PlaylistService {
+    //내 플레이리스트 목록 조회
     rpc GetMyPlaylist(GetMyPlaylistReq) returns (GetMyPlaylistRes) {};
+
+    //특정 플레이리스트 조회
+    rpc GetSpecificPlaylist(GetSpecificPlaylistReq) returns (GetSpecificPlaylistRes) {};
+
+    //새 플레이리스트 생성
+    rpc CreateNewPlaylist(CreateNewPlaylistReq) returns (CreateNewPlaylistRes) {};
+
+    //기존 플레이리스트 정보 업데이트
+    rpc UpdatePlaylist(UpdatePlaylistReq) returns (UpdatePlaylistRes) {};
+
+    //특정 플레이리스트에 곡 추가
+    rpc AddNewMusicInPlaylist(AddNewMusicInPlaylistReq) returns (AddNewMusicInPlaylistRes) {};
+
+    //특정 플레이리스트에서 곡 제거
+    rpc RemoveMusicInPlaylist(RemoveMusicInPlaylistReq) returns (RemoveMusicInPlaylistRes) {};
 }
 
-message Playlist {
+message SimplePlaylist {
     uint64 id = 1;
     uint64 numOfMusics = 2;
     string createdAt = 3;
@@ -23,5 +39,87 @@ message GetMyPlaylistReq {
 message GetMyPlaylistRes {
     string rsltCd = 1;
     string rsltMsg = 2;
-    repeated Playlist myPlaylist = 3;
+    repeated SimplePlaylist myPlaylist = 3;
+}
+
+
+message Music {
+    uint64 musicId = 1;
+    uint64 trackNumber = 2;
+
+    string title = 3;
+    string artist = 4;
+    string album = 5;
+    string genre = 6;
+    string albumImg = 7;
+    string musicUrl = 8;
+
+    bool isTitle = 9;
+}
+
+message SpecificPlaylist {
+    uint64 id = 1;
+    string createdAt = 2;
+    string updatedAt = 3;
+    string playlistName = 4;
+    repeated Music musicList = 5;
+}
+
+message GetSpecificPlaylistReq {
+    uint64 playlistId = 1;
+}
+
+message GetSpecificPlaylistRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    SpecificPlaylist playlist = 3;
+}
+
+
+message CreateNewPlaylistReq {
+    string token = 1;
+    string playlistName = 2;
+}
+
+message CreateNewPlaylistRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
+
+
+message UpdatePlaylistReq {
+    string token = 1;
+    string playlistName = 2;
+    uint64 playlistId = 3;
+}
+
+message UpdatePlaylistRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
+
+
+message AddNewMusicInPlaylistReq {
+    string token = 1;
+
+    uint64 playListId = 2;
+    repeated uint64 musicIdList = 3;
+}
+
+message AddNewMusicInPlaylistRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
+
+
+message RemoveMusicInPlaylistReq {
+    string token = 1;
+
+    uint64 playListId = 2;
+    repeated uint64 musicIdList = 3;
+}
+
+message RemoveMusicInPlaylistRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
 }

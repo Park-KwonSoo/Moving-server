@@ -49,3 +49,11 @@ func ForbiddenErr(req ...interface{}) ErrorRslt {
 		RsltMsg: "Forbidden",
 	}
 }
+
+func BadRequestErr(req ...interface{}) ErrorRslt {
+	log.Println(req...)
+	return ErrorRslt{
+		RsltCd:  "99",
+		RsltMsg: "Bad Request",
+	}
+}

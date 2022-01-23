@@ -15,6 +15,9 @@ import (
 
 	playlistpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/playlist"
 	playlist_service "github.com/Park-Kwonsoo/moving-server/services/playlist"
+
+	musicpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/music"
+	music_service "github.com/Park-Kwonsoo/moving-server/services/music"
 )
 
 const (
@@ -29,6 +32,9 @@ func registerService(s *grpc.Server) {
 	memberpb.RegisterMemberServiceServer(s, &member_service.MemberServer{})
 
 	playlistpb.RegisterPlaylistServiceServer(s, &playlist_service.PlaylistServer{})
+
+	musicpb.RegisterMusicServiceServer(s, &music_service.MusicServer{})
+
 }
 
 //grpc Router 등록

@@ -61,8 +61,7 @@ func CreateNewMember(member *Member) error {
 		hashed,
 	).ToString()
 
-	//toDo : 새 유저를 생성하는 쿼리 필요
-	_, err := psql.Exec(query)
+	err := psql.QueryRow(query).Scan(&member.ID)
 
 	return err
 }

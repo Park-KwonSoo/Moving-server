@@ -16,6 +16,8 @@ const (
 	SET  = "SET"
 	FROM = "FROM"
 
+	JOIN = "JOIN"
+
 	WHERE = "WHERE"
 	VALUE = "VALUES"
 )
@@ -27,9 +29,13 @@ type query struct {
 	QUERY_TYPE_2       string //query 2
 	QUERY_TYPE_2_VALUE string //query 2 value
 
-	QUERY_TYPE_3        string //query 3
-	QUERY_TYPE_3_OPTION string //query 3_1
-	QUERY_TYPE_3_VALUE  string //query 3_1_2 value
+	QUERY_TYPE_3       string
+	QUERY_TYPE_3_VALUE string
+
+	QUERY_TYPE_4        string //query 4
+	QUERY_TYPE_4_OPTION string //query 4_1
+	QUERY_TYPE_4_VALUE  string //query 4_1_2 value
+
 }
 
 //argument를 받아서 새로운 table을 생성한다.
@@ -41,8 +47,10 @@ func CreateTable(t string) *query {
 		QUERY_TYPE_2:        t,
 		QUERY_TYPE_2_VALUE:  "",
 		QUERY_TYPE_3:        "",
-		QUERY_TYPE_3_OPTION: "",
 		QUERY_TYPE_3_VALUE:  "",
+		QUERY_TYPE_4:        "",
+		QUERY_TYPE_4_OPTION: "",
+		QUERY_TYPE_4_VALUE:  "",
 	}
 
 	return q
@@ -65,8 +73,10 @@ func Select(c string) *query {
 		QUERY_TYPE_2:        "",
 		QUERY_TYPE_2_VALUE:  "",
 		QUERY_TYPE_3:        "",
-		QUERY_TYPE_3_OPTION: "",
 		QUERY_TYPE_3_VALUE:  "",
+		QUERY_TYPE_4:        "",
+		QUERY_TYPE_4_OPTION: "",
+		QUERY_TYPE_4_VALUE:  "",
 	}
 
 	return q
@@ -82,12 +92,35 @@ func (q *query) From(t string) *query {
 
 }
 
+//Join
+func (q *query) Join(t_key string, t2 string, t2_key string) *query {
+
+	q.QUERY_TYPE_3 = JOIN
+
+	var b bytes.Buffer
+	b.WriteString(t2)
+	b.WriteString(" ")
+	b.WriteString("ON")
+	b.WriteString(" ")
+	b.WriteString(q.QUERY_TYPE_2_VALUE)
+	b.WriteString(".")
+	b.WriteString(t_key)
+	b.WriteString("=")
+	b.WriteString(t2)
+	b.WriteString(".")
+	b.WriteString(t2_key)
+
+	q.QUERY_TYPE_3_VALUE = b.String()
+
+	return q
+}
+
 //where절의 column과 value를 argument로 받는다
 func (q *query) Where(c string, v interface{}) *query {
 
-	q.QUERY_TYPE_3 = WHERE
-	q.QUERY_TYPE_3_OPTION = c
-	q.QUERY_TYPE_3_VALUE = fmt.Sprintf("='%v'", v)
+	q.QUERY_TYPE_4 = WHERE
+	q.QUERY_TYPE_4_OPTION = c
+	q.QUERY_TYPE_4_VALUE = fmt.Sprintf("='%v'", v)
 
 	return q
 }
@@ -106,17 +139,19 @@ func Insert(t string, c string) *query {
 		QUERY_TYPE_2:        t,
 		QUERY_TYPE_2_VALUE:  b.String(),
 		QUERY_TYPE_3:        "",
-		QUERY_TYPE_3_OPTION: "",
 		QUERY_TYPE_3_VALUE:  "",
+		QUERY_TYPE_4:        "",
+		QUERY_TYPE_4_OPTION: "",
+		QUERY_TYPE_4_VALUE:  "",
 	}
 
 	return q
 }
 
 //추가할 데이터의 column에 대한 value 값을 받는다.
-func (q *query) Value(v ...string) *query {
+func (q *query) Value(v ...interface{}) *query {
 
-	q.QUERY_TYPE_3 = VALUE
+	q.QUERY_TYPE_4 = VALUE
 
 	var b bytes.Buffer
 	b.WriteString("(")
@@ -125,7 +160,7 @@ func (q *query) Value(v ...string) *query {
 	for i := 0; i < len(v); i++ {
 		var t bytes.Buffer
 		t.WriteString("'")
-		t.WriteString(v[i])
+		t.WriteString(fmt.Sprintf("%v", v[i]))
 		t.WriteString("'")
 
 		r[i] = t.String()
@@ -134,7 +169,10 @@ func (q *query) Value(v ...string) *query {
 	b.WriteString(strings.Join(r, ", "))
 	b.WriteString(")")
 
-	q.QUERY_TYPE_3_VALUE = b.String()
+	b.WriteString(" ")
+	b.WriteString("RETURNING id")
+
+	q.QUERY_TYPE_4_VALUE = b.String()
 
 	return q
 }
@@ -148,8 +186,10 @@ func Update(t string) *query {
 		QUERY_TYPE_2:        "",
 		QUERY_TYPE_2_VALUE:  "",
 		QUERY_TYPE_3:        "",
-		QUERY_TYPE_3_OPTION: "",
 		QUERY_TYPE_3_VALUE:  "",
+		QUERY_TYPE_4:        "",
+		QUERY_TYPE_4_OPTION: "",
+		QUERY_TYPE_4_VALUE:  "",
 	}
 
 	return q
@@ -203,9 +243,14 @@ func (q *query) ToString() string {
 
 	b.WriteString(q.QUERY_TYPE_3)
 	b.WriteString(" ")
-	b.WriteString(q.QUERY_TYPE_3_OPTION)
-	b.WriteString(" ")
 	b.WriteString(q.QUERY_TYPE_3_VALUE)
+	b.WriteString(" ")
+
+	b.WriteString(q.QUERY_TYPE_4)
+	b.WriteString(" ")
+	b.WriteString(q.QUERY_TYPE_4_OPTION)
+	b.WriteString(" ")
+	b.WriteString(q.QUERY_TYPE_4_VALUE)
 	b.WriteString(" ")
 
 	return b.String()

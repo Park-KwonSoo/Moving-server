@@ -77,13 +77,13 @@ func tableMapping(s interface{}) error {
 			c1.WriteString(str[1])
 			c1.WriteString("_id integer references ")
 			c1.WriteString(str[1])
-			c1.WriteString("(id)")
+			c1.WriteString("(id) on delete cascade")
 
 			var c2 bytes.Buffer
 			c2.WriteString(sName)
 			c2.WriteString("_id integer references ")
 			c2.WriteString(sName)
-			c2.WriteString("(id)")
+			c2.WriteString("(id) on delete cascade")
 
 			c := make([]string, 0)
 			c = append(c, strings.Join(getCreatedTableColumn(), ", "))

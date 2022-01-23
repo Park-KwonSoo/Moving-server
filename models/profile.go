@@ -10,7 +10,7 @@ import (
 
 type Profile struct {
 	baseType
-	Member       Member `db:"member_mem_id varchar(255) references member(mem_id)" mapping:"one2one member"`
+	Member       Member `db:"member_mem_id varchar(255) references member(mem_id) on delete cascade" mapping:"one2one member"`
 	Name         string `db:"name varchar(255)"`
 	Birth        string `db:"birth varchar(10)"`
 	Gender       string `db:"gender varchar(6)"`
@@ -58,8 +58,7 @@ func CreateNewProfile(profile *Profile) error {
 		profile.Member.MemId.String,
 	).ToString()
 
-	//toDo : make profile -> join with member
-	_, err := psql.Exec(query)
+	err := psql.QueryRow(query).Scan(&profile.ID)
 
 	return err
 }

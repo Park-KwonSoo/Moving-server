@@ -5,7 +5,7 @@ PROTOC = protoc -I=. \
 PROTO_DIR_V1 = api/protos/v1
 PROTO_DIR_V2 = api/protos/v2
 
-all : login register member playlist
+all : login register member playlist music
 
 login :
 	$(PROTOC) $(PROTO_DIR_V1)/auth/login.proto
@@ -18,3 +18,6 @@ member :
 
 playlist :
 	${PROTOC} ${PROTO_DIR_V1}/playlist/playlist.proto
+
+music :
+	${PROTOC} ${PROTO_DIR_V1}/music/music.proto
