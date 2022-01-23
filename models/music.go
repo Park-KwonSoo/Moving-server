@@ -61,7 +61,7 @@ func FindOneMusicById(id uint) (*Music, error) {
 }
 
 /**
-*	키워드로 음악 찾기
+*	toDo : 키워드로 음악 찾기
  */
 func FindAllMusicByKeyword(keyword string) ([]*Music, error) {
 	musicList := make([]*Music, 0)

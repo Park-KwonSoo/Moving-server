@@ -17,13 +17,13 @@ type PlaylistServer struct {
 }
 
 //playlist return type
-func getPlaylistReturnType(e errHandler.ErrorRslt, playlist []*db.Playlist) (*playlistpb.GetMyPlaylistRes, error) {
+func getPlaylistReturnType(e errHandler.ErrorRslt, code error, playlist []*db.Playlist) (*playlistpb.GetMyPlaylistRes, error) {
 
 	if playlist == nil {
 		return &playlistpb.GetMyPlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	myPlayList := make([]*playlistpb.SimplePlaylist, 0)
@@ -45,13 +45,13 @@ func getPlaylistReturnType(e errHandler.ErrorRslt, playlist []*db.Playlist) (*pl
 }
 
 //specific playlist return type
-func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, myPlaylist *db.Playlist) (*playlistpb.GetSpecificPlaylistRes, error) {
+func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylist *db.Playlist) (*playlistpb.GetSpecificPlaylistRes, error) {
 
 	if myPlaylist == nil {
 		return &playlistpb.GetSpecificPlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	playlist := &playlistpb.SpecificPlaylist{
@@ -93,15 +93,17 @@ func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetM
 
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
-		return getPlaylistReturnType(errHandler.AuthorizedErr("GetMyPlaylist : Validate Token Error"), nil)
+		e, code := errHandler.AuthorizedErr("GetMyPlaylist : Validate Token Error")
+		return getPlaylistReturnType(e, code, nil)
 	}
 
 	myPlaylist, err := db.FindAllPlaylistByMemberMemId(memId)
 	if err != nil {
-		return getPlaylistReturnType(errHandler.NotFoundErr("GetMyPlaylist : Not Found User's Playlist"), nil)
+		e, code := errHandler.NotFoundErr("GetMyPlaylist : Not Found User's Playlist")
+		return getPlaylistReturnType(e, code, nil)
 	}
 
-	return getPlaylistReturnType(errHandler.ErrorRslt{}, myPlaylist)
+	return getPlaylistReturnType(errHandler.ErrorRslt{}, nil, myPlaylist)
 }
 
 /**
@@ -111,10 +113,11 @@ func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistp
 
 	playlist, err := db.FindOnePlaylistById(uint(req.PlaylistId))
 	if err != nil {
-		return getSpecificPlaylistReturnType(errHandler.NotFoundErr("GetSpecificPlaylist : Not Found Playlist"), nil)
+		e, code := errHandler.NotFoundErr("GetSpecificPlaylist : Not Found Playlist")
+		return getSpecificPlaylistReturnType(e, code, nil)
 	}
 
-	return getSpecificPlaylistReturnType(errHandler.ErrorRslt{}, playlist)
+	return getSpecificPlaylistReturnType(errHandler.ErrorRslt{}, nil, playlist)
 }
 
 /**
@@ -124,12 +127,12 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
 
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
-		e := errHandler.AuthorizedErr("CreateNewPlaylist : Authorized User")
+		e, code := errHandler.AuthorizedErr("CreateNewPlaylist : Authorized User")
 
 		return &playlistpb.CreateNewPlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	playlist := &db.Playlist{
@@ -143,12 +146,12 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
 
 	err = db.CreateNewPlaylist(playlist)
 	if err != nil {
-		e := errHandler.BadRequestErr("CreateNewPlaylist : Bad Request")
+		e, code := errHandler.BadRequestErr("CreateNewPlaylist : Bad Request")
 
 		return &playlistpb.CreateNewPlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	return &playlistpb.CreateNewPlaylistRes{
@@ -163,22 +166,22 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
 func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.UpdatePlaylistReq) (*playlistpb.UpdatePlaylistRes, error) {
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
-		e := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
+		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
 
 		return &playlistpb.UpdatePlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	playlist, err := db.FindOnePlaylistById(uint(req.PlaylistId))
 	if playlist.Member.MemId.String != memId {
-		e := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
+		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
 
 		return &playlistpb.UpdatePlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	if len(req.PlaylistName) > 0 {
@@ -187,12 +190,12 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
 
 	err = db.UpdateOnePlaylist(playlist)
 	if err != nil {
-		e := errHandler.BadRequestErr("UpdatePlaylist : Update Failed")
+		e, code := errHandler.BadRequestErr("UpdatePlaylist : Update Failed")
 
 		return &playlistpb.UpdatePlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	return &playlistpb.UpdatePlaylistRes{
@@ -208,22 +211,22 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 
 	playlist, err := db.FindOnePlaylistById(uint(req.PlayListId))
 	if err != nil {
-		e := errHandler.NotFoundErr("AddNewMusicInPlaylist : Not Found Playlist")
+		e, code := errHandler.NotFoundErr("AddNewMusicInPlaylist : Not Found Playlist")
 
 		return &playlistpb.AddNewMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	err = db.AddMusicInPlaylist(playlist, req.MusicIdList...)
 	if err != nil {
-		e := errHandler.BadRequestErr("AddNewMusicInPlaylist : Bad Request")
+		e, code := errHandler.BadRequestErr("AddNewMusicInPlaylist : Bad Request")
 
 		return &playlistpb.AddNewMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	return &playlistpb.AddNewMusicInPlaylistRes{
@@ -233,7 +236,7 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 }
 
 /**
-*	Remove MusicId
+*	toDo : Remove MusicId
  */
 func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlistpb.RemoveMusicInPlaylistReq) (*playlistpb.RemoveMusicInPlaylistRes, error) {
 	return &playlistpb.RemoveMusicInPlaylistRes{

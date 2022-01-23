@@ -16,14 +16,14 @@ type MemberServer struct {
 }
 
 //profile 리턴 값을 가져오는 메서드
-func getProfileReturnType(e errHandler.ErrorRslt, profile *db.Profile) (*memberpb.GetMyProfileRes, error) {
+func getProfileReturnType(e errHandler.ErrorRslt, code error, profile *db.Profile) (*memberpb.GetMyProfileRes, error) {
 
 	if profile == nil {
 		return &memberpb.GetMyProfileRes{
 			RsltCd:    e.RsltCd,
 			RsltMsg:   e.RsltMsg,
 			MyProfile: nil,
-		}, nil
+		}, code
 	}
 
 	return &memberpb.GetMyProfileRes{
@@ -59,15 +59,17 @@ func getProfileReturnType(e errHandler.ErrorRslt, profile *db.Profile) (*memberp
 func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProfileReq) (*memberpb.GetMyProfileRes, error) {
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
-		return getProfileReturnType(errHandler.AuthorizedErr("GetMyProfile : Validate Token Error"), nil)
+		e, code := errHandler.AuthorizedErr("GetMyProfile : Validate Token Error")
+		return getProfileReturnType(e, code, nil)
 	}
 
 	profile, err := db.FindOneProfileByMemberMemId(memId)
 	if profile == nil {
-		return getProfileReturnType(errHandler.NotFoundErr("GetMyProfile : Not Found User's Profile"), nil)
+		e, code := errHandler.NotFoundErr("GetMyProfile : Not Found User's Profile")
+		return getProfileReturnType(e, code, nil)
 	}
 
-	return getProfileReturnType(errHandler.ErrorRslt{}, profile)
+	return getProfileReturnType(errHandler.ErrorRslt{}, nil, profile)
 }
 
 /*
@@ -77,22 +79,22 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 
 	memId, err := jwtUtil.ValidateToken(req.Token)
 	if err != nil {
-		e := errHandler.AuthorizedErr("UpdateMyProfile : Validate Token Error")
+		e, code := errHandler.AuthorizedErr("UpdateMyProfile : Validate Token Error")
 
 		return &memberpb.UpdateMyProfileRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	profile, err := db.FindOneProfileByMemberMemId(memId)
 	if profile == nil {
-		e := errHandler.NotFoundErr("UpdateMyProfile : Not Found User's Profile")
+		e, code := errHandler.NotFoundErr("UpdateMyProfile : Not Found User's Profile")
 
 		return &memberpb.UpdateMyProfileRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	//profile 이름 업데이트
@@ -117,12 +119,12 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 
 	err = db.UpdateOneProfile(profile)
 	if err != nil {
-		e := errHandler.ForbiddenErr("UpdateMyProfile : Forbidden")
+		e, code := errHandler.ForbiddenErr("UpdateMyProfile : Forbidden")
 
 		return &memberpb.UpdateMyProfileRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
-		}, nil
+		}, code
 	}
 
 	return &memberpb.UpdateMyProfileRes{
