@@ -65,10 +65,62 @@ func AddMusicInPlaylist(playlist *Playlist, musicIdList ...string) error {
 		return err
 	}
 
+	//슬라이스에서 추가 : push
 	update := bson.M{
 		"$push": bson.M{
 			"music": bson.M{
 				"$each": append(make([]Music, 0), musicList...),
+			},
+		},
+	}
+
+	if _, err := noSql.GetCollection("playlist").UpdateOne(context.TODO(), bson.M{
+		"_id": playlist.ID,
+	}, update); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+*	remove music in playlist
+ */
+func RemoveMusicInPlaylist(playlist *Playlist, musicIdList ...string) error {
+	//음악 찾기 쿼리
+	musicObjectIdList := make([]primitive.ObjectID, 0)
+	for _, musicId := range musicIdList {
+		objId, _ := primitive.ObjectIDFromHex(musicId)
+		musicObjectIdList = append(musicObjectIdList, objId)
+	}
+
+	filter := make([]bson.M, 0)
+	for i := 0; i < len(musicObjectIdList); i++ {
+		filter = append(filter, bson.M{
+			"_id": musicObjectIdList[i],
+		})
+	}
+
+	findQuery := bson.M{
+		"$or": filter,
+	}
+
+	//음악들을 가져옴
+	musicList := make([]Music, 0)
+	res, err := noSql.GetCollection("music").Find(context.TODO(), findQuery)
+	if err != nil {
+		return err
+	}
+
+	if err := res.All(context.TODO(), &musicList); err != nil {
+		return err
+	}
+
+	//슬라이스에서 제거 : pull
+	update := bson.M{
+		"$pull": bson.M{
+			"music": bson.M{
+				"$in": append(make([]Music, 0), musicList...),
 			},
 		},
 	}

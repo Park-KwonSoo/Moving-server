@@ -3,6 +3,7 @@ package playlist_service
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -260,6 +261,48 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 *	toDo : Remove MusicId
  */
 func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlistpb.RemoveMusicInPlaylistReq) (*playlistpb.RemoveMusicInPlaylistRes, error) {
+
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
+		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
+
+		return &playlistpb.RemoveMusicInPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
+	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
+	if err != nil {
+		e, code := errHandler.NotFoundErr("AddNewMusicInPlaylist : Not Found Playlist")
+
+		return &playlistpb.RemoveMusicInPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	if memId != playlist.MemId {
+		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
+
+		return &playlistpb.RemoveMusicInPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	err = nosqlModel.RemoveMusicInPlaylist(playlist, req.MusicIdList...)
+	if err != nil {
+		log.Println(err)
+		e, code := errHandler.BadRequestErr("AddNewMusicInPlaylist : Bad Request")
+
+		return &playlistpb.RemoveMusicInPlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
 	return &playlistpb.RemoveMusicInPlaylistRes{
 		RsltCd:  "00",
 		RsltMsg: "Success",

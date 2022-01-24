@@ -108,7 +108,7 @@ message AddNewMusicInPlaylistRes {
 
 
 message RemoveMusicInPlaylistReq {
-    string playListId = 1;
+    string playlistId = 1;
     repeated string musicIdList = 2;
 }
 
