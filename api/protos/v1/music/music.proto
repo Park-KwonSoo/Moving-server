@@ -16,21 +16,21 @@ service MusicService {
 }
 
 message Music {
-    uint64 musicId = 1;
+    string musicId = 1;
     uint64 trackNumber = 2;
 
     string title = 3;
     string artist = 4;
     string album = 5;
     string genre = 6;
-    string albumImg = 7;
+    string albumCoverUrl = 7;
     string musicUrl = 8;
 
     bool isTitle = 9;
 }
 
 message GetMusicDetailReq {
-    uint64 musicId = 1;
+    string musicId = 1;
 }
 
 message GetMusicDetailRes {
@@ -60,6 +60,7 @@ message AddNewMusicReq {
     string genre = 6;
 
     bool isTitle = 7;
+    uint64 trackNumber = 8;
 }
 
 message AddNewMusicRes {

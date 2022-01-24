@@ -3,22 +3,24 @@ package main
 import (
 	"sync"
 
-	db "github.com/Park-Kwonsoo/moving-server/internal/models"
 	Router "github.com/Park-Kwonsoo/moving-server/internal/router"
+	nosqlDB "github.com/Park-Kwonsoo/moving-server/pkg/database/nosql"
+	_ "github.com/Park-Kwonsoo/moving-server/pkg/database/sql"
 )
 
 func main() {
 
 	var wait sync.WaitGroup
-	wait.Add(1)
+	wait.Add(2)
 
 	go func() {
-		defer func() {
-			db.Disconnect()
-			wait.Done()
-		}()
-		db.Connect()
+		defer wait.Done()
 		Router.SetupRouter()
+	}()
+
+	go func() {
+		defer wait.Done()
+		nosqlDB.Connect()
 	}()
 
 	wait.Wait()

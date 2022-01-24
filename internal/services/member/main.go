@@ -8,7 +8,7 @@ import (
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
-	db "github.com/Park-Kwonsoo/moving-server/internal/models"
+	sqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/sql"
 )
 
 type MemberServer struct {
@@ -16,7 +16,7 @@ type MemberServer struct {
 }
 
 //profile 리턴 값을 가져오는 메서드
-func getProfileReturnType(e errHandler.ErrorRslt, code error, profile *db.Profile) (*memberpb.GetMyProfileRes, error) {
+func getProfileReturnType(e errHandler.ErrorRslt, code error, profile *sqlModel.Profile) (*memberpb.GetMyProfileRes, error) {
 
 	if profile == nil {
 		return &memberpb.GetMyProfileRes{
@@ -64,7 +64,7 @@ func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProf
 		return getProfileReturnType(e, code, nil)
 	}
 
-	profile, err := db.FindOneProfileByMemberMemId(memId)
+	profile, err := sqlModel.FindOneProfileByMemberMemId(memId)
 	if profile == nil || err != nil {
 		e, code := errHandler.NotFoundErr("GetMyProfile : Not Found User's Profile")
 		return getProfileReturnType(e, code, nil)
@@ -88,7 +88,7 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 		}, code
 	}
 
-	profile, err := db.FindOneProfileByMemberMemId(memId)
+	profile, err := sqlModel.FindOneProfileByMemberMemId(memId)
 	if profile == nil {
 		e, code := errHandler.NotFoundErr("UpdateMyProfile : Not Found User's Profile")
 
@@ -118,7 +118,7 @@ func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.Update
 		profile.ProfileImage = req.ProfileImg
 	}
 
-	err = db.UpdateOneProfile(profile)
+	err = sqlModel.UpdateOneProfile(profile)
 	if err != nil {
 		e, code := errHandler.ForbiddenErr("UpdateMyProfile : Forbidden")
 

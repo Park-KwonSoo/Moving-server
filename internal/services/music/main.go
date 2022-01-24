@@ -8,11 +8,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	musicpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/music"
 
+	"github.com/Park-Kwonsoo/moving-server/pkg/database/nosql"
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
-	db "github.com/Park-Kwonsoo/moving-server/internal/models"
+	nosqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/nosql"
+	sqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/sql"
 )
 
 type MusicServer struct {
@@ -22,7 +26,7 @@ type MusicServer struct {
 /**
 *	GetMusicDetail의 리턴 타입을 가져옴
  */
-func getMusicDetailReturnType(e errHandler.ErrorRslt, code error, music *db.Music) (*musicpb.GetMusicDetailRes, error) {
+func getMusicDetailReturnType(e errHandler.ErrorRslt, code error, music *nosqlModel.Music) (*musicpb.GetMusicDetailRes, error) {
 
 	if music == nil {
 		return &musicpb.GetMusicDetailRes{
@@ -35,15 +39,15 @@ func getMusicDetailReturnType(e errHandler.ErrorRslt, code error, music *db.Musi
 		RsltCd:  "00",
 		RsltMsg: "Success",
 		Music: &musicpb.Music{
-			MusicId:     uint64(music.ID),
 			TrackNumber: uint64(music.TrackNumber),
 
-			Title:    music.Title,
-			Artist:   music.Artist,
-			Album:    music.Album,
-			Genre:    music.Genre,
-			AlbumImg: music.AlbumImg,
-			MusicUrl: music.MusicUrl,
+			MusicId:       music.ID.String(),
+			Title:         music.Title,
+			Artist:        music.Artist,
+			Album:         music.Album,
+			Genre:         music.AlbumCoverUrl,
+			MusicUrl:      music.MusicUrl,
+			AlbumCoverUrl: music.AlbumCoverUrl,
 
 			IsTitle: music.IsTitle,
 		},
@@ -53,7 +57,7 @@ func getMusicDetailReturnType(e errHandler.ErrorRslt, code error, music *db.Musi
 /**
 * GetMusicByKeyword의 리턴 타입을 가져옴
  */
-func getMusicByKeywordReturnType(e errHandler.ErrorRslt, code error, musicList []*db.Music) (*musicpb.GetMusicByKeywordRes, error) {
+func getMusicByKeywordReturnType(e errHandler.ErrorRslt, code error, musicList []*nosqlModel.Music) (*musicpb.GetMusicByKeywordRes, error) {
 
 	if len(musicList) == 0 {
 		return &musicpb.GetMusicByKeywordRes{
@@ -65,14 +69,11 @@ func getMusicByKeywordReturnType(e errHandler.ErrorRslt, code error, musicList [
 	rsltList := make([]*musicpb.Music, 0)
 	for _, music := range musicList {
 		rsltList = append(rsltList, &musicpb.Music{
-			MusicId:     uint64(music.ID),
+			MusicId:     music.ID.String(),
 			TrackNumber: uint64(music.TrackNumber),
 
 			Title:    music.Title,
 			Artist:   music.Artist,
-			Album:    music.Album,
-			Genre:    music.Genre,
-			AlbumImg: music.AlbumImg,
 			MusicUrl: music.MusicUrl,
 
 			IsTitle: music.IsTitle,
@@ -88,7 +89,8 @@ func getMusicByKeywordReturnType(e errHandler.ErrorRslt, code error, musicList [
 
 func (s *MusicServer) GetMusicDetail(ctx context.Context, req *musicpb.GetMusicDetailReq) (*musicpb.GetMusicDetailRes, error) {
 
-	music, err := db.FindOneMusicById(uint(req.MusicId))
+	musicId, _ := primitive.ObjectIDFromHex(req.MusicId)
+	music, err := nosqlModel.FindOneMusicById(musicId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("GetMusicDetail : Not Found Music")
 		return getMusicDetailReturnType(e, code, nil)
@@ -99,7 +101,7 @@ func (s *MusicServer) GetMusicDetail(ctx context.Context, req *musicpb.GetMusicD
 
 func (s *MusicServer) GetMusicByKeyword(ctx context.Context, req *musicpb.GetMusicByKeywordReq) (*musicpb.GetMusicByKeywordRes, error) {
 
-	musicList, err := db.FindAllMusicByKeyword(req.Keyword)
+	musicList, err := nosqlModel.FindAllMusicByKeyword(req.Keyword)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("GetMusicByKeyword : Not Found Music")
 		return getMusicByKeywordReturnType(e, code, nil)
@@ -116,15 +118,15 @@ func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer)
 		return code
 	}
 
-	member, _ := db.FindOneMemberByMemId(memId)
+	member, _ := sqlModel.FindOneMemberByMemId(memId)
 	if member == nil {
 		_, code := errHandler.NotFoundErr("AddNewMusic : Not Found User")
 		return code
 	}
-	// if member.MemPosition != "MANAGER" {
-	// 	_, code := errHandler.ForbiddenErr("AddNewMusic : Forbidden, Not A Manager")
-	// 	return code
-	// }
+	if member.MemPosition != "MANAGER" {
+		_, code := errHandler.ForbiddenErr("AddNewMusic : Forbidden, Not A Manager")
+		return code
+	}
 
 	//music file 생성
 	music, e := os.Create("temp_music")
@@ -171,9 +173,23 @@ func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer)
 		music.Close()
 		img.Close()
 
-		//toDo : File GCS Upload And Make DB
-		os.Rename("temp_music", fmt.Sprintf("%s_%s_%s_%s.wav", res.Title, res.Artist, res.Album, res.Genre))
-		os.Rename("temp_image", fmt.Sprintf("%s_%s_%s.png", res.Artist, res.Album, res.Genre))
+		//toDo : File GCS Upload And Make nosqlModel
+		os.Rename("temp_music", fmt.Sprintf("%s_%s_%s.wav", res.Title, res.Artist, res.Album))
+		os.Rename("temp_image", fmt.Sprintf("%s_%s.png", res.Artist, res.Album))
+
+		nosqlModel.CreateNewMusic(&nosqlModel.Music{
+			Title:         res.Title,
+			Artist:        res.Artist,
+			Album:         res.Album,
+			Genre:         res.Genre,
+			TrackNumber:   uint(res.TrackNumber),
+			AlbumCoverUrl: string(res.AlbumImg),
+			MusicUrl:      string(res.Music),
+			IsTitle:       res.IsTitle,
+			BaseType: nosql.BaseType{
+				UseYn: "Y",
+			},
+		})
 
 	}
 

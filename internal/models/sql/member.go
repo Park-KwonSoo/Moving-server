@@ -1,18 +1,21 @@
-package models
+package sql_model
 
 import (
 	"errors"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"database/sql"
 
+	sqlDB "github.com/Park-Kwonsoo/moving-server/pkg/database/sql"
 	getTag "github.com/Park-Kwonsoo/moving-server/pkg/get-struct-info"
 	hashPassword "github.com/Park-Kwonsoo/moving-server/pkg/hashing-password"
 	qb "github.com/Park-Kwonsoo/moving-server/pkg/query-builder"
 )
 
 type Member struct {
-	baseType
+	sqlDB.BaseType
 	MemId       sql.NullString `db:"mem_id varchar(255) unique not null"`
 	MemType     string         `db:"mem_type varchar(10) not null"`                      // LOCAL | GOOGLE | KAKAO | NAVER | etc..
 	MemPosition string         `db:"mem_position varchar(20) not null default 'NORMAL'"` //관리자, 일반 유저, 등
@@ -23,22 +26,22 @@ type Member struct {
 func memberMigrate() error {
 
 	column := make([]string, 0)
-	column = append(column, strings.Join(getCreatedTableColumn(), ", "))
+	column = append(column, strings.Join(sqlDB.GetCreatedTableColumn(), ", "))
 	column = append(column, getTag.GetStructInfoByTag("db", &Member{})...)
 
 	query := qb.CreateTable("member").TableComlumn(
 		column...,
 	).ToString()
 
-	if _, err := psql.Exec(query); err != nil {
+	if _, err := sqlDB.SQL.Exec(query); err != nil {
 		return err
 	}
 
-	if err := createUpdateTrigger("member"); err != nil {
+	if err := sqlDB.CreateUpdateTrigger("member"); err != nil {
 		return err
 	}
 
-	err := tableMapping(&Member{})
+	err := sqlDB.TableMapping(&Member{})
 	return err
 }
 
@@ -60,7 +63,7 @@ func CreateNewMember(member *Member) error {
 		hashed,
 	).ToString()
 
-	err := psql.QueryRow(query).Scan(&member.ID)
+	err := sqlDB.SQL.QueryRow(query).Scan(&member.ID)
 
 	return err
 }
@@ -87,7 +90,7 @@ func (m *Member) ChangePassword(pw string) error {
 		m.Password,
 	}).Where("id", m.ID).ToString()
 
-	_, err = psql.Exec(query)
+	_, err = sqlDB.SQL.Exec(query)
 
 	return err
 }
@@ -97,7 +100,7 @@ func FindOneMemberById(id uint) (*Member, error) {
 	member := &Member{}
 
 	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, password").From("member").Where("id", id).ToString()
-	psql.QueryRow(query).Scan(
+	sqlDB.SQL.QueryRow(query).Scan(
 		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.Password,
 	)
 
@@ -113,7 +116,7 @@ func FindOneMemberByMemId(memId string) (*Member, error) {
 	member := &Member{}
 
 	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, password").From("member").Where("mem_id", memId).ToString()
-	psql.QueryRow(query).Scan(
+	sqlDB.SQL.QueryRow(query).Scan(
 		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.Password,
 	)
 
@@ -123,4 +126,10 @@ func FindOneMemberByMemId(memId string) (*Member, error) {
 	}
 
 	return member, nil
+}
+
+func init() {
+	if err := memberMigrate(); err != nil {
+		logrus.Error(err)
+	}
 }

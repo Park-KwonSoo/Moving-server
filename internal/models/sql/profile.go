@@ -1,15 +1,18 @@
-package models
+package sql_model
 
 import (
 	"errors"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
+	sqlDB "github.com/Park-Kwonsoo/moving-server/pkg/database/sql"
 	getTag "github.com/Park-Kwonsoo/moving-server/pkg/get-struct-info"
 	qb "github.com/Park-Kwonsoo/moving-server/pkg/query-builder"
 )
 
 type Profile struct {
-	baseType
+	sqlDB.BaseType
 	Member       Member `db:"member_mem_id varchar(255) references member(mem_id) on delete cascade" mapping:"one2one member"`
 	Name         string `db:"name varchar(255)"`
 	Birth        string `db:"birth varchar(10)"`
@@ -21,22 +24,22 @@ type Profile struct {
 func profileMigrate() error {
 
 	column := make([]string, 0)
-	column = append(column, strings.Join(getCreatedTableColumn(), ", "))
+	column = append(column, strings.Join(sqlDB.GetCreatedTableColumn(), ", "))
 	column = append(column, getTag.GetStructInfoByTag("db", &Profile{})...)
 
 	query := qb.CreateTable("profile").TableComlumn(
 		column...,
 	).ToString()
 
-	if _, err := psql.Exec(query); err != nil {
+	if _, err := sqlDB.SQL.Exec(query); err != nil {
 		return err
 	}
 
-	if err := createUpdateTrigger("profile"); err != nil {
+	if err := sqlDB.CreateUpdateTrigger("profile"); err != nil {
 		return err
 	}
 
-	err := tableMapping(&Profile{})
+	err := sqlDB.TableMapping(&Profile{})
 	return err
 }
 
@@ -56,7 +59,7 @@ func CreateNewProfile(profile *Profile) error {
 		profile.Member.MemId.String,
 	).ToString()
 
-	err := psql.QueryRow(query).Scan(&profile.ID)
+	err := sqlDB.SQL.QueryRow(query).Scan(&profile.ID)
 
 	return err
 }
@@ -68,7 +71,7 @@ func FindOneProfileById(id uint) (*Profile, error) {
 	var memId string //유저 아이디 저장
 
 	query := qb.Select("id, creatd_at, updated_at, name, birth, gender, profile_img, member_mem_id").From("profile").Where("id", id).ToString()
-	psql.QueryRow(query).Scan(
+	sqlDB.SQL.QueryRow(query).Scan(
 		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage, &memId,
 	)
 
@@ -99,7 +102,7 @@ func FindOneProfileByMemberMemId(memId string) (*Profile, error) {
 	profile.Member = *member
 
 	query := qb.Select("id, created_at, updated_at, name, birth, gender, profile_img").From("profile").Where("member_mem_id", memId).ToString()
-	psql.QueryRow(query).Scan(
+	sqlDB.SQL.QueryRow(query).Scan(
 		&profile.ID, &profile.CreatedAt, &profile.UpdatedAt, &profile.Name, &profile.Birth, &profile.Gender, &profile.ProfileImage,
 	)
 
@@ -120,7 +123,13 @@ func UpdateOneProfile(profile *Profile) error {
 		profile.ProfileImage,
 	}).Where("id", profile.ID).ToString()
 
-	_, err := psql.Exec(query)
+	_, err := sqlDB.SQL.Exec(query)
 
 	return err
+}
+
+func init() {
+	if err := profileMigrate(); err != nil {
+		logrus.Error(err)
+	}
 }

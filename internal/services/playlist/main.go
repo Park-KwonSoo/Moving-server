@@ -2,14 +2,16 @@ package playlist_service
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	playlistpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/playlist"
 
+	"github.com/Park-Kwonsoo/moving-server/pkg/database/nosql"
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
-	db "github.com/Park-Kwonsoo/moving-server/internal/models"
+	nosqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/nosql"
 )
 
 type PlaylistServer struct {
@@ -17,7 +19,7 @@ type PlaylistServer struct {
 }
 
 //playlist return type
-func getPlaylistReturnType(e errHandler.ErrorRslt, code error, playlist []*db.Playlist) (*playlistpb.GetMyPlaylistRes, error) {
+func getPlaylistReturnType(e errHandler.ErrorRslt, code error, playlist []*nosqlModel.Playlist) (*playlistpb.GetMyPlaylistRes, error) {
 
 	if playlist == nil {
 		return &playlistpb.GetMyPlaylistRes{
@@ -29,7 +31,7 @@ func getPlaylistReturnType(e errHandler.ErrorRslt, code error, playlist []*db.Pl
 	myPlayList := make([]*playlistpb.SimplePlaylist, 0)
 	for i := 0; i < len(playlist); i++ {
 		myPlayList = append(myPlayList, &playlistpb.SimplePlaylist{
-			Id:           uint64(playlist[i].ID),
+			Id:           playlist[i].ID.String(),
 			CreatedAt:    playlist[i].CreatedAt.String(),
 			UpdatedAt:    playlist[i].UpdatedAt.String(),
 			PlaylistName: playlist[i].PlaylistName,
@@ -45,7 +47,7 @@ func getPlaylistReturnType(e errHandler.ErrorRslt, code error, playlist []*db.Pl
 }
 
 //specific playlist return type
-func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylist *db.Playlist) (*playlistpb.GetSpecificPlaylistRes, error) {
+func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylist *nosqlModel.Playlist) (*playlistpb.GetSpecificPlaylistRes, error) {
 
 	if myPlaylist == nil {
 		return &playlistpb.GetSpecificPlaylistRes{
@@ -55,7 +57,7 @@ func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylis
 	}
 
 	playlist := &playlistpb.SpecificPlaylist{
-		Id:           uint64(myPlaylist.ID),
+		Id:           myPlaylist.ID.String(),
 		CreatedAt:    myPlaylist.CreatedAt.String(),
 		UpdatedAt:    myPlaylist.UpdatedAt.String(),
 		PlaylistName: myPlaylist.PlaylistName,
@@ -64,15 +66,11 @@ func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylis
 
 	for _, music := range myPlaylist.Music {
 		playlist.MusicList = append(playlist.MusicList, &playlistpb.Music{
-			MusicId:     uint64(music.ID),
+			MusicId:     music.ID.String(),
 			TrackNumber: uint64(music.TrackNumber),
 
-			Title:  music.Title,
-			Artist: music.Artist,
-			Album:  music.Album,
-			Genre:  music.Genre,
-
-			AlbumImg: music.AlbumImg,
+			Title:    music.Title,
+			Artist:   music.Artist,
 			MusicUrl: music.MusicUrl,
 
 			IsTitle: music.IsTitle,
@@ -97,7 +95,7 @@ func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetM
 		return getPlaylistReturnType(e, code, nil)
 	}
 
-	myPlaylist, err := db.FindAllPlaylistByMemberMemId(memId)
+	myPlaylist, err := nosqlModel.FindAllPlaylistByMemberMemId(memId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("GetMyPlaylist : Not Found User's Playlist")
 		return getPlaylistReturnType(e, code, nil)
@@ -111,7 +109,8 @@ func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetM
  */
 func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistpb.GetSpecificPlaylistReq) (*playlistpb.GetSpecificPlaylistRes, error) {
 
-	playlist, err := db.FindOnePlaylistById(uint(req.PlaylistId))
+	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
+	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("GetSpecificPlaylist : Not Found Playlist")
 		return getSpecificPlaylistReturnType(e, code, nil)
@@ -135,16 +134,16 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
 		}, code
 	}
 
-	playlist := &db.Playlist{
+	playlist := &nosqlModel.Playlist{
 		PlaylistName: req.PlaylistName,
-		Member: db.Member{
-			MemId: sql.NullString{
-				String: memId,
-			},
+		MemId:        memId,
+		Music:        make([]nosqlModel.Music, 0),
+		BaseType: nosql.BaseType{
+			UseYn: "Y",
 		},
 	}
 
-	err := db.CreateNewPlaylist(playlist)
+	err := nosqlModel.CreateNewPlaylist(playlist)
 	if err != nil {
 		e, code := errHandler.BadRequestErr("CreateNewPlaylist : Bad Request")
 
@@ -175,8 +174,9 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
 		}, code
 	}
 
-	playlist, err := db.FindOnePlaylistById(uint(req.PlaylistId))
-	if playlist.Member.MemId.String != memId {
+	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
+	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
+	if playlist.MemId != memId {
 		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
 
 		return &playlistpb.UpdatePlaylistRes{
@@ -189,7 +189,7 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
 		playlist.PlaylistName = req.PlaylistName
 	}
 
-	err = db.UpdateOnePlaylist(playlist)
+	err = nosqlModel.UpdateOnePlaylist(playlist)
 	if err != nil {
 		e, code := errHandler.BadRequestErr("UpdatePlaylist : Update Failed")
 
@@ -220,7 +220,8 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 		}, code
 	}
 
-	playlist, err := db.FindOnePlaylistById(uint(req.PlayListId))
+	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
+	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("AddNewMusicInPlaylist : Not Found Playlist")
 
@@ -230,7 +231,7 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 		}, code
 	}
 
-	if memId != playlist.Member.MemId.String {
+	if memId != playlist.MemId {
 		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
 
 		return &playlistpb.AddNewMusicInPlaylistRes{
@@ -239,7 +240,7 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 		}, code
 	}
 
-	err = db.AddMusicInPlaylist(playlist, req.MusicIdList...)
+	err = nosqlModel.AddMusicInPlaylist(playlist, req.MusicIdList...)
 	if err != nil {
 		e, code := errHandler.BadRequestErr("AddNewMusicInPlaylist : Bad Request")
 

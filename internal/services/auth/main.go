@@ -9,7 +9,7 @@ import (
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
-	db "github.com/Park-Kwonsoo/moving-server/internal/models"
+	sqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/sql"
 	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 )
 
@@ -32,7 +32,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		}, code
 	}
 
-	member := &db.Member{
+	member := &sqlModel.Member{
 		MemId: sql.NullString{
 			String: req.MemId,
 			Valid:  true,
@@ -41,7 +41,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		MemType:  req.RegisterType,
 	}
 
-	err := db.CreateNewMember(member)
+	err := sqlModel.CreateNewMember(member)
 	if err != nil {
 		e, code := errHandler.ConflictErr("Register : Conflict")
 
@@ -51,7 +51,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		}, code
 	}
 
-	profile := &db.Profile{
+	profile := &sqlModel.Profile{
 		Member:       *member,
 		Name:         req.Name,
 		Birth:        req.Birth,
@@ -59,7 +59,7 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 		ProfileImage: req.ProfileImg,
 	}
 
-	err = db.CreateNewProfile(profile)
+	err = sqlModel.CreateNewProfile(profile)
 	if err != nil {
 		e, code := errHandler.ConflictErr("Register : Conflict")
 
@@ -80,7 +80,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 
 	memId := req.MemId
 
-	member, err := db.FindOneMemberByMemId(memId)
+	member, err := sqlModel.FindOneMemberByMemId(memId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("Login : Not Found User")
 
@@ -130,7 +130,7 @@ func (s *LoginServer) PasswordCheck(ctx context.Context, req *authpb.PasswordChe
 		}, code
 	}
 
-	member, err := db.FindOneMemberByMemId(memId)
+	member, err := sqlModel.FindOneMemberByMemId(memId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("PasswordCheck : Not Found User")
 
@@ -161,7 +161,7 @@ func (s *LoginServer) PasswordChange(ctx context.Context, req *authpb.PasswordCh
 		}, code
 	}
 
-	member, err := db.FindOneMemberByMemId(memId)
+	member, err := sqlModel.FindOneMemberByMemId(memId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("PasswordChange : Not Found User")
 

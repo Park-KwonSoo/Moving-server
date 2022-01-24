@@ -25,7 +25,7 @@ service PlaylistService {
 }
 
 message SimplePlaylist {
-    uint64 id = 1;
+    string id = 1;
     uint64 numOfMusics = 2;
     string createdAt = 3;
     string updatedAt = 4;
@@ -43,7 +43,7 @@ message GetMyPlaylistRes {
 
 
 message Music {
-    uint64 musicId = 1;
+    string musicId = 1;
     uint64 trackNumber = 2;
 
     string title = 3;
@@ -57,7 +57,7 @@ message Music {
 }
 
 message SpecificPlaylist {
-    uint64 id = 1;
+    string id = 1;
     string createdAt = 2;
     string updatedAt = 3;
     string playlistName = 4;
@@ -65,7 +65,7 @@ message SpecificPlaylist {
 }
 
 message GetSpecificPlaylistReq {
-    uint64 playlistId = 1;
+    string playlistId = 1;
 }
 
 message GetSpecificPlaylistRes {
@@ -87,7 +87,7 @@ message CreateNewPlaylistRes {
 
 message UpdatePlaylistReq {
     string playlistName = 1;
-    uint64 playlistId = 2;
+    string playlistId = 2;
 }
 
 message UpdatePlaylistRes {
@@ -97,8 +97,8 @@ message UpdatePlaylistRes {
 
 
 message AddNewMusicInPlaylistReq {
-    uint64 playListId = 1;
-    repeated uint64 musicIdList = 2;
+    string playlistId = 1;
+    repeated string musicIdList = 2;
 }
 
 message AddNewMusicInPlaylistRes {
@@ -108,8 +108,8 @@ message AddNewMusicInPlaylistRes {
 
 
 message RemoveMusicInPlaylistReq {
-    uint64 playListId = 1;
-    repeated uint64 musicIdList = 2;
+    string playListId = 1;
+    repeated string musicIdList = 2;
 }
 
 message RemoveMusicInPlaylistRes {
