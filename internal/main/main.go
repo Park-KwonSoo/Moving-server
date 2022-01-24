@@ -3,8 +3,8 @@ package main
 import (
 	"sync"
 
-	db "github.com/Park-Kwonsoo/moving-server/models"
-	Router "github.com/Park-Kwonsoo/moving-server/router"
+	db "github.com/Park-Kwonsoo/moving-server/internal/models"
+	Router "github.com/Park-Kwonsoo/moving-server/internal/router"
 )
 
 func main() {

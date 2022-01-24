@@ -18,23 +18,23 @@ import (
 	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
-	auth_service "github.com/Park-Kwonsoo/moving-server/services/auth"
+	auth_service "github.com/Park-Kwonsoo/moving-server/internal/services/auth"
 
 	memberpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/member"
-	member_service "github.com/Park-Kwonsoo/moving-server/services/member"
+	member_service "github.com/Park-Kwonsoo/moving-server/internal/services/member"
 
 	playlistpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/playlist"
-	playlist_service "github.com/Park-Kwonsoo/moving-server/services/playlist"
+	playlist_service "github.com/Park-Kwonsoo/moving-server/internal/services/playlist"
 
 	musicpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/music"
-	music_service "github.com/Park-Kwonsoo/moving-server/services/music"
+	music_service "github.com/Park-Kwonsoo/moving-server/internal/services/music"
 )
 
 const (
 	port = ":9000"
 )
 
-//유저 인증 JWT 토큰을 Interceptor : token값을 decode하여 memId를 전달
+//유저 인증 JWT 토큰 Interceptor : token값을 decode하여 memId를 전달
 func authInterceptor(ctx context.Context) (context.Context, error) {
 
 	token, _ := grpc_auth.AuthFromMD(ctx, "bearer")
@@ -87,7 +87,16 @@ func SetupRouter() {
 		)),
 
 		//streaming server interceptor middleware
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer()),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			//auth_interceptor
+			grpc_auth.StreamServerInterceptor(authInterceptor),
+
+			//loggin_interceptor
+			grpc_logrus.StreamServerInterceptor(logrusEntry),
+
+			//recovery interceptor
+			grpc_recovery.StreamServerInterceptor(),
+		)),
 	)
 	//서비스 등록
 	registerService(s)

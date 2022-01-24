@@ -8,7 +8,7 @@ import (
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
-	db "github.com/Park-Kwonsoo/moving-server/models"
+	db "github.com/Park-Kwonsoo/moving-server/internal/models"
 )
 
 type MemberServer struct {

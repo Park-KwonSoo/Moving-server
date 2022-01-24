@@ -51,7 +51,15 @@ message GetMusicByKeywordRes {
 
 
 message AddNewMusicReq {
-    bytes music = 2;
+    bytes music = 1;
+    bytes albumImg = 2;
+
+    string title = 3;
+    string artist = 4;
+    string album = 5;
+    string genre = 6;
+
+    bool isTitle = 7;
 }
 
 message AddNewMusicRes {

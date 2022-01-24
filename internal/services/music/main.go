@@ -2,12 +2,17 @@ package music_service
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/sirupsen/logrus"
 
 	musicpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/music"
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
-	db "github.com/Park-Kwonsoo/moving-server/models"
+	db "github.com/Park-Kwonsoo/moving-server/internal/models"
 )
 
 type MusicServer struct {
@@ -101,4 +106,79 @@ func (s *MusicServer) GetMusicByKeyword(ctx context.Context, req *musicpb.GetMus
 	}
 
 	return getMusicByKeywordReturnType(errHandler.ErrorRslt{}, nil, musicList)
+}
+
+func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer) error {
+
+	memId := fmt.Sprintf("%v", stream.Context().Value("memId"))
+	if len(memId) == 0 {
+		_, code := errHandler.AuthorizedErr("AddNewMusic : Validate Token Error")
+		return code
+	}
+
+	member, _ := db.FindOneMemberByMemId(memId)
+	if member == nil {
+		_, code := errHandler.NotFoundErr("AddNewMusic : Not Found User")
+		return code
+	}
+	// if member.MemPosition != "MANAGER" {
+	// 	_, code := errHandler.ForbiddenErr("AddNewMusic : Forbidden, Not A Manager")
+	// 	return code
+	// }
+
+	//music file 생성
+	music, e := os.Create("temp_music")
+	if e != nil {
+		logrus.Error(e)
+		_, code := errHandler.BadRequestErr("AddNewMusic : Audio File Create Err")
+		return code
+	}
+
+	//img 파일 생성
+	img, e := os.Create("temp_image")
+	if e != nil {
+		logrus.Error(e)
+		_, code := errHandler.BadRequestErr("AddNewMusic : Iamge File Create Err")
+		//rslt 채널에 bad request 에러 송신
+		return code
+	}
+
+	for {
+		res, e := stream.Recv()
+
+		//더 이상 받아올 데이터가 없을 때 = 데이터를 전부 다 받아왔을 때 break
+		if e == io.EOF {
+			logrus.Info("AddNewMusic : Recieve Done")
+			music.Close()
+			os.Remove("temp_music")
+			img.Close()
+			os.Remove("temp_image")
+			break
+		}
+		if e != nil {
+			logrus.Error(e)
+			music.Close()
+			os.Remove("temp_music")
+			img.Close()
+			os.Remove("temp_image")
+			_, code := errHandler.BadRequestErr("AddNewMusic : Stream Receive Err")
+			return code
+		}
+
+		music.Write(res.Music)
+		img.Write(res.Music)
+
+		music.Close()
+		img.Close()
+
+		//toDo : File GCS Upload And Make DB
+		os.Rename("temp_music", fmt.Sprintf("%s_%s_%s_%s.wav", res.Title, res.Artist, res.Album, res.Genre))
+		os.Rename("temp_image", fmt.Sprintf("%s_%s_%s.png", res.Artist, res.Album, res.Genre))
+
+	}
+
+	return stream.SendAndClose(&musicpb.AddNewMusicRes{
+		RsltCd:  "00",
+		RsltMsg: "Success",
+	})
 }
