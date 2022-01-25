@@ -30,6 +30,8 @@ type MusicServiceClient interface {
 	AddNewMusic(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewMusicClient, error)
 	//새로운 앨범을 등록함 : 관리자만 사용 가능
 	AddNewAlbum(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewAlbumClient, error)
+	//음악을 전부 들었을 때, 조회수를 증가시키는 기능
+	ListenMusic(ctx context.Context, in *ListenMusicReq, opts ...grpc.CallOption) (*ListenMusicRes, error)
 }
 
 type musicServiceClient struct {
@@ -126,6 +128,15 @@ func (x *musicServiceAddNewAlbumClient) CloseAndRecv() (*AddNewAlbumRes, error) 
 	return m, nil
 }
 
+func (c *musicServiceClient) ListenMusic(ctx context.Context, in *ListenMusicReq, opts ...grpc.CallOption) (*ListenMusicRes, error) {
+	out := new(ListenMusicRes)
+	err := c.cc.Invoke(ctx, "/v1.music_proto.MusicService/ListenMusic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MusicServiceServer is the server API for MusicService service.
 // All implementations must embed UnimplementedMusicServiceServer
 // for forward compatibility
@@ -138,6 +149,8 @@ type MusicServiceServer interface {
 	AddNewMusic(MusicService_AddNewMusicServer) error
 	//새로운 앨범을 등록함 : 관리자만 사용 가능
 	AddNewAlbum(MusicService_AddNewAlbumServer) error
+	//음악을 전부 들었을 때, 조회수를 증가시키는 기능
+	ListenMusic(context.Context, *ListenMusicReq) (*ListenMusicRes, error)
 	mustEmbedUnimplementedMusicServiceServer()
 }
 
@@ -156,6 +169,9 @@ func (UnimplementedMusicServiceServer) AddNewMusic(MusicService_AddNewMusicServe
 }
 func (UnimplementedMusicServiceServer) AddNewAlbum(MusicService_AddNewAlbumServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddNewAlbum not implemented")
+}
+func (UnimplementedMusicServiceServer) ListenMusic(context.Context, *ListenMusicReq) (*ListenMusicRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListenMusic not implemented")
 }
 func (UnimplementedMusicServiceServer) mustEmbedUnimplementedMusicServiceServer() {}
 
@@ -258,6 +274,24 @@ func (x *musicServiceAddNewAlbumServer) Recv() (*AddNewAlbumReq, error) {
 	return m, nil
 }
 
+func _MusicService_ListenMusic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListenMusicReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MusicServiceServer).ListenMusic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.music_proto.MusicService/ListenMusic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MusicServiceServer).ListenMusic(ctx, req.(*ListenMusicReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MusicService_ServiceDesc is the grpc.ServiceDesc for MusicService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -272,6 +306,10 @@ var MusicService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMusicByKeyword",
 			Handler:    _MusicService_GetMusicByKeyword_Handler,
+		},
+		{
+			MethodName: "ListenMusic",
+			Handler:    _MusicService_ListenMusic_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

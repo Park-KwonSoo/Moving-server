@@ -16,6 +16,9 @@ service MusicService {
 
     //새로운 앨범을 등록함 : 관리자만 사용 가능
     rpc AddNewAlbum(stream AddNewAlbumReq) returns (AddNewAlbumRes) {};
+
+    //음악을 전부 들었을 때, 조회수를 증가시키는 기능
+    rpc ListenMusic(ListenMusicReq) returns (ListenMusicRes) {};
 }
 
 message Music {
@@ -82,4 +85,12 @@ message AddNewAlbumReq {
 message AddNewAlbumRes {
     string rsltCd = 1;
     string rsltMsg = 2;
+}
+
+message ListenMusicReq {
+    string musicId = 1;
+}
+
+message ListenMusicRes {
+
 }

@@ -39,6 +39,21 @@ func musicListenLogMigrate() error {
 	return err
 }
 
+/**
+*	Create Music Listen Log
+ */
+func CreateNewMusicListenLog(musicListenLog *MusicListenLog) error {
+
+	query := qb.Insert("music_listen_log", "member_mem_id, music_id").Value(
+		musicListenLog.MemId,
+		musicListenLog.MusicId,
+	).ToString()
+
+	err := sqlDB.SQL.QueryRow(query).Scan(&musicListenLog.ID)
+
+	return err
+}
+
 func init() {
 	if err := musicListenLogMigrate(); err != nil {
 		logrus.Error(err)

@@ -252,3 +252,56 @@ func (s *MusicServer) AddNewAlbum(stream musicpb.MusicService_AddNewAlbumServer)
 		RsltMsg: "Success",
 	})
 }
+
+func (s *MusicServer) ListenMusic(ctx context.Context, req *musicpb.ListenMusicReq) (*musicpb.ListenMusicRes, error) {
+
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
+		_, code := errHandler.AuthorizedErr("ListenMusic : Not Authorized")
+		return &musicpb.ListenMusicRes{}, code
+	}
+
+	chanErr := make(chan error)
+
+	go func() {
+		member, _ := sqlModel.FindOneMemberByMemId(memId)
+		if member == nil {
+			_, code := errHandler.NotFoundErr("ListenMusic : Not Found User")
+			chanErr <- code
+
+			return
+		}
+		chanErr <- nil
+	}()
+
+	go func() {
+		musicId, _ := primitive.ObjectIDFromHex(req.MusicId)
+		music, err := nosqlModel.FindOneMusicById(musicId)
+		if music == nil || err != nil {
+			_, code := errHandler.NotFoundErr("ListenMusic : Not Found Music")
+			chanErr <- code
+
+			return
+		}
+
+		chanErr <- nil
+	}()
+
+	for i := 0; i < 2; i++ {
+		if err := <-chanErr; err != nil {
+			return &musicpb.ListenMusicRes{}, err
+		}
+	}
+
+	musicListenLog := &sqlModel.MusicListenLog{
+		MemId:   memId,
+		MusicId: req.MusicId,
+	}
+
+	if err := sqlModel.CreateNewMusicListenLog(musicListenLog); err != nil {
+		_, code := errHandler.BadRequestErr("ListenMusic : Bad Request")
+		return &musicpb.ListenMusicRes{}, code
+	}
+
+	return &musicpb.ListenMusicRes{}, nil
+}
