@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package v1.music_proto;
+
+option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/music";
+
+service MusicService {
+    //한 곡의 상세 정보를 가져옴
+    rpc GetMusicDetail(GetMusicDetailReq) returns (GetMusicDetailRes) {};
+    
+    //키워드를 바탕으로 일치하는 키워드를 가진 곡의 정보를 가져옴
+    rpc GetMusicByKeyword(GetMusicByKeywordReq) returns (GetMusicByKeywordRes) {};
+
+    //새로운 음악 파일을 등록함 : 관리자만 사용 가능
+    rpc AddNewMusic(stream AddNewMusicReq) returns (AddNewMusicRes) {};
+
+    //새로운 앨범을 등록함 : 관리자만 사용 가능
+    rpc AddNewAlbum(stream AddNewAlbumReq) returns (AddNewAlbumRes) {};
+
+    //음악을 전부 들었을 때, 조회수를 증가시키는 기능
+    rpc ListenMusic(ListenMusicReq) returns (ListenMusicRes) {};
+}
+
+message Music {
+    string musicId = 1;
+    uint64 trackNumber = 2;
+
+    string title = 3;
+    string artist = 4;
+    string album = 5;
+    string genre = 6;
+    string albumCoverUrl = 7;
+    string musicUrl = 8;
+
+    bool isTitle = 9;
+}
+
+message GetMusicDetailReq {
+    string musicId = 1;
+}
+
+message GetMusicDetailRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    Music music = 3;
+}
+
+message GetMusicByKeywordReq {
+    string keyword = 1;
+}
+
+message GetMusicByKeywordRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    repeated Music searchResult = 3;
+}
+
+
+message AddNewMusicReq {
+    bytes music = 1;
+
+    string title = 2;
+    string artist = 3;
+    string genre = 4;
+    string albumId = 5;
+
+    bool isTitle = 6;
+    uint64 trackNumber = 7;
+}
+
+message AddNewMusicRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
+
+
+message AddNewAlbumReq {
+    string album = 1;
+    string artist = 2;
+    string genre = 3;
+    string description = 4;
+    string albumCoverUrl = 5;
+}
+
+message AddNewAlbumRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
+
+message ListenMusicReq {
+    string musicId = 1;
+}
+
+message ListenMusicRes {
+
+}

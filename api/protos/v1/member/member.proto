@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package v1.member_proto;
+
+option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/member";
+
+service MemberService {
+    rpc GetMyProfile(GetMyProfileReq) returns (GetMyProfileRes) {};
+    rpc UpdateMyProfile(UpdateMyProfileReq) returns (UpdateMyProfileRes) {};
+}
+
+message Member {
+    uint64 id = 1;
+    string CreatedAt = 2;
+    string UpdatedAt = 3;
+    string DeletedAt = 4;
+    
+    string memId = 5;
+    string memType = 6;
+}
+
+message Profile {
+    uint64 id = 1;
+    string CreatedAt = 2;
+    string UpdatedAt = 3;
+    string DeletedAt = 4;
+
+    Member member = 5;
+    string name = 6;
+    string birth = 7;
+    string gender = 8;
+    string profileImg = 9;
+}
+
+message GetMyProfileReq {
+}
+
+message GetMyProfileRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    Profile myProfile = 3;
+}
+
+message UpdateMyProfileReq {
+    string name = 1;
+    string mobile = 2;
+    string gender = 3;
+    string birth = 4;
+    string profile_img = 5;
+}
+
+message UpdateMyProfileRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}

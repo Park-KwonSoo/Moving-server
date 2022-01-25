@@ -22,7 +22,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LoginServiceClient interface {
+	//로그인 api
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginRes, error)
+	//비밀번호를 입력받아, 올바른 비밀번호인지의 여부를 리턴함
+	PasswordCheck(ctx context.Context, in *PasswordCheckReq, opts ...grpc.CallOption) (*PasswordCheckRes, error)
+	//새로운 비밀번호로 비밀번호를 변경함
+	PasswordChange(ctx context.Context, in *PasswordChangeReq, opts ...grpc.CallOption) (*PasswordChangeRes, error)
 }
 
 type loginServiceClient struct {
@@ -42,11 +47,34 @@ func (c *loginServiceClient) Login(ctx context.Context, in *LoginReq, opts ...gr
 	return out, nil
 }
 
+func (c *loginServiceClient) PasswordCheck(ctx context.Context, in *PasswordCheckReq, opts ...grpc.CallOption) (*PasswordCheckRes, error) {
+	out := new(PasswordCheckRes)
+	err := c.cc.Invoke(ctx, "/v1.login_proto.LoginService/PasswordCheck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *loginServiceClient) PasswordChange(ctx context.Context, in *PasswordChangeReq, opts ...grpc.CallOption) (*PasswordChangeRes, error) {
+	out := new(PasswordChangeRes)
+	err := c.cc.Invoke(ctx, "/v1.login_proto.LoginService/PasswordChange", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LoginServiceServer is the server API for LoginService service.
 // All implementations must embed UnimplementedLoginServiceServer
 // for forward compatibility
 type LoginServiceServer interface {
+	//로그인 api
 	Login(context.Context, *LoginReq) (*LoginRes, error)
+	//비밀번호를 입력받아, 올바른 비밀번호인지의 여부를 리턴함
+	PasswordCheck(context.Context, *PasswordCheckReq) (*PasswordCheckRes, error)
+	//새로운 비밀번호로 비밀번호를 변경함
+	PasswordChange(context.Context, *PasswordChangeReq) (*PasswordChangeRes, error)
 	mustEmbedUnimplementedLoginServiceServer()
 }
 
@@ -56,6 +84,12 @@ type UnimplementedLoginServiceServer struct {
 
 func (UnimplementedLoginServiceServer) Login(context.Context, *LoginReq) (*LoginRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedLoginServiceServer) PasswordCheck(context.Context, *PasswordCheckReq) (*PasswordCheckRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PasswordCheck not implemented")
+}
+func (UnimplementedLoginServiceServer) PasswordChange(context.Context, *PasswordChangeReq) (*PasswordChangeRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PasswordChange not implemented")
 }
 func (UnimplementedLoginServiceServer) mustEmbedUnimplementedLoginServiceServer() {}
 
@@ -88,6 +122,42 @@ func _LoginService_Login_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LoginService_PasswordCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PasswordCheckReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LoginServiceServer).PasswordCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.login_proto.LoginService/PasswordCheck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LoginServiceServer).PasswordCheck(ctx, req.(*PasswordCheckReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LoginService_PasswordChange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PasswordChangeReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LoginServiceServer).PasswordChange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.login_proto.LoginService/PasswordChange",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LoginServiceServer).PasswordChange(ctx, req.(*PasswordChangeReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LoginService_ServiceDesc is the grpc.ServiceDesc for LoginService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +168,14 @@ var LoginService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _LoginService_Login_Handler,
+		},
+		{
+			MethodName: "PasswordCheck",
+			Handler:    _LoginService_PasswordCheck_Handler,
+		},
+		{
+			MethodName: "PasswordChange",
+			Handler:    _LoginService_PasswordChange_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

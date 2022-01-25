@@ -3,19 +3,30 @@ package main
 import (
 	"sync"
 
-	db "github.com/Park-Kwonsoo/moving-server/models"
-	Router "github.com/Park-Kwonsoo/moving-server/router"
+	Router "github.com/Park-Kwonsoo/moving-server/internal/router"
+	CacheServer "github.com/Park-Kwonsoo/moving-server/pkg/cache-server"
+	nosqlDB "github.com/Park-Kwonsoo/moving-server/pkg/database/nosql"
+	_ "github.com/Park-Kwonsoo/moving-server/pkg/database/sql"
 )
 
 func main() {
 
 	var wait sync.WaitGroup
-	wait.Add(1)
+	wait.Add(3)
 
 	go func() {
 		defer wait.Done()
-		db.Connect()
 		Router.SetupRouter()
+	}()
+
+	go func() {
+		defer wait.Done()
+		CacheServer.Connect()
+	}()
+
+	go func() {
+		defer wait.Done()
+		nosqlDB.Connect()
 	}()
 
 	wait.Wait()

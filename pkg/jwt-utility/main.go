@@ -1,8 +1,8 @@
 package jwtutility
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -15,20 +15,26 @@ type accessToken struct {
 	UserId string `json:"userId"`
 }
 
-//userId를 바탕으로 token을 발급
-func GetJwtToken(userId string) (string, error) {
+//memId를 바탕으로 token을 발급
+func GenerateJwtToken(memId string) (string, error) {
+
+	expirationHour, err := strconv.Atoi(os.Getenv("TOKEN_EXPIRATION_HOUR"))
+	if err != nil {
+		return "", err
+	}
+
 	claims := &accessToken{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(), //30일 토큰
+			ExpiresAt: time.Now().Add(time.Hour * time.Duration(expirationHour)).Unix(), //expiration Hour시간만큼의 만료기간
 		},
-		UserId: userId,
+		UserId: memId,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(jwtSecretKey))
 
 	if err != nil {
-		return "", fmt.Errorf("token signed error")
+		return "", err
 	}
 
 	return signedToken, nil
@@ -37,12 +43,12 @@ func GetJwtToken(userId string) (string, error) {
 //token의 유효성 검증 및 decode
 func ValidateToken(tokenString string) (string, error) {
 	claims := &accessToken{}
-	rslt, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	rslt, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecretKey), nil
 	})
 
 	if !rslt.Valid {
-		return "", fmt.Errorf("validate token failed")
+		return "", err
 	}
 
 	return claims.UserId, nil

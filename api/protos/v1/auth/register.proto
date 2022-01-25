@@ -7,6 +7,7 @@ option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/auth";
 // import "api/protos/google/api/annotations.proto";
 
 service RegisterService {
+    //회원가입 api
     rpc Register(RegisterReq) returns (RegisterRes) {
         // option (google.api.http) = {
         //     post : "/auth/register" 
@@ -17,7 +18,7 @@ service RegisterService {
 
 message RegisterReq {
     string registerType = 1;
-    string userId = 2;
+    string memId = 2;
     string password = 3;
     string passwordCheck = 4;
     

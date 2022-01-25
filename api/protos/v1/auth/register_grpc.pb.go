@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RegisterServiceClient interface {
+	//회원가입 api
 	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterRes, error)
 }
 
@@ -46,6 +47,7 @@ func (c *registerServiceClient) Register(ctx context.Context, in *RegisterReq, o
 // All implementations must embed UnimplementedRegisterServiceServer
 // for forward compatibility
 type RegisterServiceServer interface {
+	//회원가입 api
 	Register(context.Context, *RegisterReq) (*RegisterRes, error)
 	mustEmbedUnimplementedRegisterServiceServer()
 }

@@ -7,17 +7,24 @@ option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/auth";
 // import "api/protos/google/api/annotations.proto";
 
 service LoginService {
+    //로그인 api
     rpc Login(LoginReq) returns (LoginRes) {
         // option (google.api.http) = { 
         //     post : "/auth/login" 
         //     body : "request"
         // };
     };
+
+    //비밀번호를 입력받아, 올바른 비밀번호인지의 여부를 리턴함
+    rpc PasswordCheck(PasswordCheckReq) returns (PasswordCheckRes) {};
+
+    //새로운 비밀번호로 비밀번호를 변경함
+    rpc PasswordChange(PasswordChangeReq) returns (PasswordChangeRes) {};
 }
 
 message LoginReq {
     string loginType = 1;
-    string userId = 2;
+    string memId = 2;
     string password = 3;
 }
 
@@ -25,4 +32,23 @@ message LoginRes {
     string rsltCd = 1;
     string rsltMsg = 2;
     string token = 3;
+}
+
+message PasswordCheckReq {
+    string oldPassword = 1;
+}
+
+message PasswordCheckRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+    bool isChecked = 3;
+}
+
+message PasswordChangeReq {
+    string newPassword = 1;
+}
+
+message PasswordChangeRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
 }
