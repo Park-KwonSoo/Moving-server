@@ -13,6 +13,7 @@ import (
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 
 	nosqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/nosql"
+	sqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/sql"
 )
 
 type PlaylistServer struct {
@@ -70,8 +71,12 @@ func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylis
 			MusicId:     music.ID.String(),
 			TrackNumber: uint64(music.TrackNumber),
 
-			Title:    music.Title,
-			Artist:   music.Artist,
+			Title:  music.Title,
+			Artist: music.Artist,
+			Album:  music.Album,
+			Genre:  music.Genre,
+
+			AlbumImg: music.AlbumCoverUrl,
 			MusicUrl: music.MusicUrl,
 
 			IsTitle: music.IsTitle,
@@ -107,7 +112,6 @@ func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetM
 
 /**
 *	Get Specifin Playlist By Platlist Id
-*	Doing Caching
  */
 func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistpb.GetSpecificPlaylistReq) (*playlistpb.GetSpecificPlaylistRes, error) {
 
@@ -308,6 +312,76 @@ func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlis
 	}
 
 	return &playlistpb.RemoveMusicInPlaylistRes{
+		RsltCd:  "00",
+		RsltMsg: "Success",
+	}, nil
+}
+
+func (s *PlaylistServer) LikePlaylist(ctx context.Context, req *playlistpb.LikePlaylistReq) (*playlistpb.LikePlaylistRes, error) {
+
+	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	if len(memId) == 0 {
+		e, code := errHandler.AuthorizedErr("LikePlaylist : Authorized User")
+
+		return &playlistpb.LikePlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
+	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
+	if err != nil {
+		e, code := errHandler.BadRequestErr("LikePlaylist : Not Right PlaylistId")
+
+		return &playlistpb.LikePlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+	if playlist.MemId == memId {
+		e, code := errHandler.BadRequestErr("LikePlaylist : Playlist Owner Can't Do like")
+
+		return &playlistpb.LikePlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	hadLike, err := sqlModel.HavePlaylistLikeByMemIdAndPlaylistId(memId, req.PlaylistId)
+	if err != nil {
+		e, code := errHandler.BadRequestErr("LikePlaylist : Find Like Log Error")
+
+		return &playlistpb.LikePlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+	if !hadLike {
+		e, code := errHandler.BadRequestErr("LikePlaylist : You Already Like")
+
+		return &playlistpb.LikePlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	playlistLike := &sqlModel.PlaylistLike{
+		MemId:      memId,
+		PlaylistId: req.PlaylistId,
+	}
+
+	err = sqlModel.CreateNewPlaylistLike(playlistLike)
+	if err != nil {
+		e, code := errHandler.BadRequestErr("LikePlaylist : Create PlaylistLike error")
+
+		return &playlistpb.LikePlaylistRes{
+			RsltCd:  e.RsltCd,
+			RsltMsg: e.RsltMsg,
+		}, code
+	}
+
+	return &playlistpb.LikePlaylistRes{
 		RsltCd:  "00",
 		RsltMsg: "Success",
 	}, nil

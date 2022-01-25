@@ -6,8 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/sirupsen/logrus"
-
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	musicpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/music"
@@ -59,7 +57,7 @@ func getMusicDetailReturnType(e errHandler.ErrorRslt, code error, music *nosqlMo
  */
 func getMusicByKeywordReturnType(e errHandler.ErrorRslt, code error, musicList []*nosqlModel.Music) (*musicpb.GetMusicByKeywordRes, error) {
 
-	if len(musicList) == 0 {
+	if code != nil {
 		return &musicpb.GetMusicByKeywordRes{
 			RsltCd:  e.RsltCd,
 			RsltMsg: e.RsltMsg,
@@ -72,9 +70,13 @@ func getMusicByKeywordReturnType(e errHandler.ErrorRslt, code error, musicList [
 			MusicId:     music.ID.String(),
 			TrackNumber: uint64(music.TrackNumber),
 
-			Title:    music.Title,
-			Artist:   music.Artist,
-			MusicUrl: music.MusicUrl,
+			Title:  music.Title,
+			Artist: music.Artist,
+			Album:  music.Album,
+			Genre:  music.Genre,
+
+			MusicUrl:      music.MusicUrl,
+			AlbumCoverUrl: music.AlbumCoverUrl,
 
 			IsTitle: music.IsTitle,
 		})
@@ -128,20 +130,16 @@ func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer)
 		return code
 	}
 
-	//music file 생성
-	music, e := os.Create("temp_music")
-	if e != nil {
-		logrus.Error(e)
-		_, code := errHandler.BadRequestErr("AddNewMusic : Audio File Create Err")
-		return code
+	album := &nosqlModel.Album{}
+	music := &nosqlModel.Music{
+		BaseType: nosql.BaseType{
+			UseYn: "Y",
+		},
 	}
-
-	//img 파일 생성
-	img, e := os.Create("temp_image")
+	//music file 생성
+	musicFile, e := os.Create("temp_music")
 	if e != nil {
-		logrus.Error(e)
-		_, code := errHandler.BadRequestErr("AddNewMusic : Iamge File Create Err")
-		//rslt 채널에 bad request 에러 송신
+		_, code := errHandler.BadRequestErr("AddNewMusic : Audio File Create Err")
 		return code
 	}
 
@@ -150,50 +148,106 @@ func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer)
 
 		//더 이상 받아올 데이터가 없을 때 = 데이터를 전부 다 받아왔을 때 break
 		if e == io.EOF {
-			logrus.Info("AddNewMusic : Recieve Done")
-			music.Close()
+			musicFile.Close()
 			os.Remove("temp_music")
-			img.Close()
-			os.Remove("temp_image")
 			break
 		}
 		if e != nil {
-			logrus.Error(e)
-			music.Close()
+			musicFile.Close()
 			os.Remove("temp_music")
-			img.Close()
-			os.Remove("temp_image")
-			_, code := errHandler.BadRequestErr("AddNewMusic : Stream Receive Err")
+			_, code := errHandler.BadRequestErr("AddNewMusic : Stream Receive Error")
 			return code
 		}
 
-		music.Write(res.Music)
-		img.Write(res.Music)
+		musicFile.Write(res.Music)
+		musicFile.Close()
 
-		music.Close()
-		img.Close()
+		albumId, e := primitive.ObjectIDFromHex(res.AlbumId)
+		if e != nil {
+			musicFile.Close()
+			os.Remove("temp_music")
+			_, code := errHandler.BadRequestErr("AddNewMusic : Album Id")
+			return code
+		}
+		album, e = nosqlModel.FindOneAlbumById(albumId)
+		if e != nil {
+			musicFile.Close()
+			os.Remove("temp_music")
+			_, code := errHandler.NotFoundErr("AddNewMusic : Not Found Album")
+			return code
+		}
 
-		//toDo : File GCS Upload And Make nosqlModel
-		os.Rename("temp_music", fmt.Sprintf("%s_%s_%s.wav", res.Title, res.Artist, res.Album))
-		os.Rename("temp_image", fmt.Sprintf("%s_%s.png", res.Artist, res.Album))
+		music.Title = res.Title
+		music.Artist = res.Artist
+		music.Genre = res.Genre
+		music.TrackNumber = uint(res.TrackNumber)
+		music.IsTitle = res.IsTitle
 
-		nosqlModel.CreateNewMusic(&nosqlModel.Music{
-			Title:         res.Title,
-			Artist:        res.Artist,
-			Album:         res.Album,
-			Genre:         res.Genre,
-			TrackNumber:   uint(res.TrackNumber),
-			AlbumCoverUrl: string(res.AlbumImg),
-			MusicUrl:      string(res.Music),
-			IsTitle:       res.IsTitle,
-			BaseType: nosql.BaseType{
-				UseYn: "Y",
-			},
-		})
+		os.Rename("temp_music", fmt.Sprintf("%s_%s_%s.wav", music.Title, music.Artist, music.Album))
+	}
 
+	err := nosqlModel.CreateNewMusic(music, album)
+	if err != nil {
+		_, code := errHandler.BadRequestErr("AddNewMusic : Bad Request")
+		return code
 	}
 
 	return stream.SendAndClose(&musicpb.AddNewMusicRes{
+		RsltCd:  "00",
+		RsltMsg: "Success",
+	})
+}
+
+func (s *MusicServer) AddNewAlbum(stream musicpb.MusicService_AddNewAlbumServer) error {
+
+	memId := fmt.Sprintf("%v", stream.Context().Value("memId"))
+	if len(memId) == 0 {
+		_, code := errHandler.AuthorizedErr("AddNewAlbum : Validate Token Error")
+		return code
+	}
+
+	member, _ := sqlModel.FindOneMemberByMemId(memId)
+	if member == nil {
+		_, code := errHandler.NotFoundErr("AddNewAlbum : Not Found User")
+		return code
+	}
+	if member.MemPosition != "MANAGER" {
+		_, code := errHandler.ForbiddenErr("AddNewAlbum : Forbidden, Not A Manager")
+		return code
+	}
+
+	//toDo : GCS
+	album := &nosqlModel.Album{
+		Music: make([]nosqlModel.Music, 0),
+		BaseType: nosql.BaseType{
+			UseYn: "Y",
+		},
+	}
+
+	for {
+		res, e := stream.Recv()
+		if e == io.EOF {
+			break
+		}
+		if e != nil {
+			_, code := errHandler.BadRequestErr("AddNewAlbum : Stream Receive Error")
+			return code
+		}
+
+		album.Album = res.Album
+		album.Artist = res.Artist
+		album.Genre = res.Genre
+		album.Description = res.Description
+		album.AlbumCoverUrl = res.AlbumCoverUrl
+	}
+
+	err := nosqlModel.CreateNewAlbum(album)
+	if err != nil {
+		_, code := errHandler.BadRequestErr("AddNewAlbum : Bad Request")
+		return code
+	}
+
+	return stream.SendAndClose(&musicpb.AddNewAlbumRes{
 		RsltCd:  "00",
 		RsltMsg: "Success",
 	})

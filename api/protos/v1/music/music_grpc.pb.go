@@ -28,6 +28,8 @@ type MusicServiceClient interface {
 	GetMusicByKeyword(ctx context.Context, in *GetMusicByKeywordReq, opts ...grpc.CallOption) (*GetMusicByKeywordRes, error)
 	//새로운 음악 파일을 등록함 : 관리자만 사용 가능
 	AddNewMusic(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewMusicClient, error)
+	//새로운 앨범을 등록함 : 관리자만 사용 가능
+	AddNewAlbum(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewAlbumClient, error)
 }
 
 type musicServiceClient struct {
@@ -90,6 +92,40 @@ func (x *musicServiceAddNewMusicClient) CloseAndRecv() (*AddNewMusicRes, error) 
 	return m, nil
 }
 
+func (c *musicServiceClient) AddNewAlbum(ctx context.Context, opts ...grpc.CallOption) (MusicService_AddNewAlbumClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MusicService_ServiceDesc.Streams[1], "/v1.music_proto.MusicService/AddNewAlbum", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &musicServiceAddNewAlbumClient{stream}
+	return x, nil
+}
+
+type MusicService_AddNewAlbumClient interface {
+	Send(*AddNewAlbumReq) error
+	CloseAndRecv() (*AddNewAlbumRes, error)
+	grpc.ClientStream
+}
+
+type musicServiceAddNewAlbumClient struct {
+	grpc.ClientStream
+}
+
+func (x *musicServiceAddNewAlbumClient) Send(m *AddNewAlbumReq) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *musicServiceAddNewAlbumClient) CloseAndRecv() (*AddNewAlbumRes, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(AddNewAlbumRes)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MusicServiceServer is the server API for MusicService service.
 // All implementations must embed UnimplementedMusicServiceServer
 // for forward compatibility
@@ -100,6 +136,8 @@ type MusicServiceServer interface {
 	GetMusicByKeyword(context.Context, *GetMusicByKeywordReq) (*GetMusicByKeywordRes, error)
 	//새로운 음악 파일을 등록함 : 관리자만 사용 가능
 	AddNewMusic(MusicService_AddNewMusicServer) error
+	//새로운 앨범을 등록함 : 관리자만 사용 가능
+	AddNewAlbum(MusicService_AddNewAlbumServer) error
 	mustEmbedUnimplementedMusicServiceServer()
 }
 
@@ -115,6 +153,9 @@ func (UnimplementedMusicServiceServer) GetMusicByKeyword(context.Context, *GetMu
 }
 func (UnimplementedMusicServiceServer) AddNewMusic(MusicService_AddNewMusicServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddNewMusic not implemented")
+}
+func (UnimplementedMusicServiceServer) AddNewAlbum(MusicService_AddNewAlbumServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddNewAlbum not implemented")
 }
 func (UnimplementedMusicServiceServer) mustEmbedUnimplementedMusicServiceServer() {}
 
@@ -191,6 +232,32 @@ func (x *musicServiceAddNewMusicServer) Recv() (*AddNewMusicReq, error) {
 	return m, nil
 }
 
+func _MusicService_AddNewAlbum_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MusicServiceServer).AddNewAlbum(&musicServiceAddNewAlbumServer{stream})
+}
+
+type MusicService_AddNewAlbumServer interface {
+	SendAndClose(*AddNewAlbumRes) error
+	Recv() (*AddNewAlbumReq, error)
+	grpc.ServerStream
+}
+
+type musicServiceAddNewAlbumServer struct {
+	grpc.ServerStream
+}
+
+func (x *musicServiceAddNewAlbumServer) SendAndClose(m *AddNewAlbumRes) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *musicServiceAddNewAlbumServer) Recv() (*AddNewAlbumReq, error) {
+	m := new(AddNewAlbumReq)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MusicService_ServiceDesc is the grpc.ServiceDesc for MusicService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -211,6 +278,11 @@ var MusicService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "AddNewMusic",
 			Handler:       _MusicService_AddNewMusic_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "AddNewAlbum",
+			Handler:       _MusicService_AddNewAlbum_Handler,
 			ClientStreams: true,
 		},
 	},

@@ -163,7 +163,9 @@ func FindAllPlaylistByMemberMemId(memId string) ([]*Playlist, error) {
 func FindOnePlaylistById(id primitive.ObjectID) (*Playlist, error) {
 
 	playlist := &Playlist{}
-	if err := noSql.GetCollection("playlist").FindOne(context.TODO(), bson.M{"_id": id}).Decode(playlist); err != nil {
+	if err := noSql.GetCollection("playlist").FindOne(context.TODO(), bson.M{
+		"_id": id,
+	}).Decode(playlist); err != nil {
 		return nil, err
 	}
 

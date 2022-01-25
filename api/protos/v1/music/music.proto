@@ -13,6 +13,9 @@ service MusicService {
 
     //새로운 음악 파일을 등록함 : 관리자만 사용 가능
     rpc AddNewMusic(stream AddNewMusicReq) returns (AddNewMusicRes) {};
+
+    //새로운 앨범을 등록함 : 관리자만 사용 가능
+    rpc AddNewAlbum(stream AddNewAlbumReq) returns (AddNewAlbumRes) {};
 }
 
 message Music {
@@ -52,18 +55,31 @@ message GetMusicByKeywordRes {
 
 message AddNewMusicReq {
     bytes music = 1;
-    bytes albumImg = 2;
 
-    string title = 3;
-    string artist = 4;
-    string album = 5;
-    string genre = 6;
+    string title = 2;
+    string artist = 3;
+    string genre = 4;
+    string albumId = 5;
 
-    bool isTitle = 7;
-    uint64 trackNumber = 8;
+    bool isTitle = 6;
+    uint64 trackNumber = 7;
 }
 
 message AddNewMusicRes {
+    string rsltCd = 1;
+    string rsltMsg = 2;
+}
+
+
+message AddNewAlbumReq {
+    string album = 1;
+    string artist = 2;
+    string genre = 3;
+    string description = 4;
+    string albumCoverUrl = 5;
+}
+
+message AddNewAlbumRes {
     string rsltCd = 1;
     string rsltMsg = 2;
 }

@@ -52,25 +52,7 @@ func authInterceptor(ctx context.Context) (context.Context, error) {
 //cache를 위한 custom unary interceptor
 func customCacheUnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-
-		// //redis key 생성
-		// key := cache.KeyMake(strings.Split(info.FullMethod, "/")[2], ctx.Value("memId"), req)
-		// //key를 통해 cache값을 가져옴
-		// if val, err := cache.GetCache(key); err == nil {
-		// 	//proto를 Unmarshal 하기 위해서는, protoreflect.ProtoMessage의 형태가 필요하다.
-		// 	//이 떄 resp := protoreflect.ProtoMesssage로 선언은 불가(왜냐하면 인터페이스이기 때문)
-		// 	//따라서 임의의 proto 파일에 정의된 message를 가져와서 넣으면 정상 작동함
-		// 	resp := &authpb.LoginRes{}
-		// 	err = proto.Unmarshal(val, resp)
-
-		// 	return resp, err
-		// }
-
 		resp, err := handler(ctx, req)
-		// if e := cache.SetCacheProto(key, resp, err); e != nil {
-		// 	logrus.Println("Set Cache Error:", e)
-		// }
-
 		return resp, err
 	}
 }
@@ -78,8 +60,7 @@ func customCacheUnaryInterceptor() grpc.UnaryServerInterceptor {
 //cache custom streaming interceptor
 func customCacheStreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-
-		return nil
+		return handler(srv, ss)
 	}
 }
 

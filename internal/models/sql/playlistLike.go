@@ -39,6 +39,42 @@ func playlistLikeMigrate() error {
 	return err
 }
 
+/**
+*	Playlist Like DB Create
+ */
+func CreateNewPlaylistLike(playlistLike *PlaylistLike) error {
+
+	query := qb.Insert("playlist_like", "member_mem_id, playlist_id").Value(
+		playlistLike.MemId,
+		playlistLike.PlaylistId,
+	).ToString()
+
+	err := sqlDB.SQL.QueryRow(query).Scan(&playlistLike.ID)
+
+	return err
+}
+
+/**
+*	Check playlistLike Table Has Db By MemId And PlaylistId
+ */
+func HavePlaylistLikeByMemIdAndPlaylistId(memId string, playlistId string) (bool, error) {
+
+	var count int
+
+	query := qb.Select("count(*)").
+		From("playlist_like").
+		Where("member_mem_id", memId).
+		And("playlist_id", playlistId).
+		ToString()
+
+	err := sqlDB.SQL.QueryRow(query).Scan(&count)
+	if count > 0 {
+		return false, err
+	}
+
+	return true, err
+}
+
 func init() {
 	if err := playlistLikeMigrate(); err != nil {
 		logrus.Error(err)

@@ -34,6 +34,8 @@ type PlaylistServiceClient interface {
 	AddNewMusicInPlaylist(ctx context.Context, in *AddNewMusicInPlaylistReq, opts ...grpc.CallOption) (*AddNewMusicInPlaylistRes, error)
 	//특정 플레이리스트에서 곡 제거
 	RemoveMusicInPlaylist(ctx context.Context, in *RemoveMusicInPlaylistReq, opts ...grpc.CallOption) (*RemoveMusicInPlaylistRes, error)
+	//플레이리스트에 좋아요 기능
+	LikePlaylist(ctx context.Context, in *LikePlaylistReq, opts ...grpc.CallOption) (*LikePlaylistRes, error)
 }
 
 type playlistServiceClient struct {
@@ -98,6 +100,15 @@ func (c *playlistServiceClient) RemoveMusicInPlaylist(ctx context.Context, in *R
 	return out, nil
 }
 
+func (c *playlistServiceClient) LikePlaylist(ctx context.Context, in *LikePlaylistReq, opts ...grpc.CallOption) (*LikePlaylistRes, error) {
+	out := new(LikePlaylistRes)
+	err := c.cc.Invoke(ctx, "/v1.playlist_proto.PlaylistService/LikePlaylist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlaylistServiceServer is the server API for PlaylistService service.
 // All implementations must embed UnimplementedPlaylistServiceServer
 // for forward compatibility
@@ -114,6 +125,8 @@ type PlaylistServiceServer interface {
 	AddNewMusicInPlaylist(context.Context, *AddNewMusicInPlaylistReq) (*AddNewMusicInPlaylistRes, error)
 	//특정 플레이리스트에서 곡 제거
 	RemoveMusicInPlaylist(context.Context, *RemoveMusicInPlaylistReq) (*RemoveMusicInPlaylistRes, error)
+	//플레이리스트에 좋아요 기능
+	LikePlaylist(context.Context, *LikePlaylistReq) (*LikePlaylistRes, error)
 	mustEmbedUnimplementedPlaylistServiceServer()
 }
 
@@ -138,6 +151,9 @@ func (UnimplementedPlaylistServiceServer) AddNewMusicInPlaylist(context.Context,
 }
 func (UnimplementedPlaylistServiceServer) RemoveMusicInPlaylist(context.Context, *RemoveMusicInPlaylistReq) (*RemoveMusicInPlaylistRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMusicInPlaylist not implemented")
+}
+func (UnimplementedPlaylistServiceServer) LikePlaylist(context.Context, *LikePlaylistReq) (*LikePlaylistRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LikePlaylist not implemented")
 }
 func (UnimplementedPlaylistServiceServer) mustEmbedUnimplementedPlaylistServiceServer() {}
 
@@ -260,6 +276,24 @@ func _PlaylistService_RemoveMusicInPlaylist_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlaylistService_LikePlaylist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LikePlaylistReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlaylistServiceServer).LikePlaylist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.playlist_proto.PlaylistService/LikePlaylist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlaylistServiceServer).LikePlaylist(ctx, req.(*LikePlaylistReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlaylistService_ServiceDesc is the grpc.ServiceDesc for PlaylistService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +324,10 @@ var PlaylistService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveMusicInPlaylist",
 			Handler:    _PlaylistService_RemoveMusicInPlaylist_Handler,
+		},
+		{
+			MethodName: "LikePlaylist",
+			Handler:    _PlaylistService_LikePlaylist_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

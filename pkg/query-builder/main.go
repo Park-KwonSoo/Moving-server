@@ -20,6 +20,8 @@ const (
 
 	WHERE = "WHERE"
 	VALUE = "VALUES"
+
+	AND = "AND"
 )
 
 type query struct {
@@ -36,6 +38,9 @@ type query struct {
 	QUERY_TYPE_4_OPTION string //query 4_1
 	QUERY_TYPE_4_VALUE  string //query 4_1_2 value
 
+	QUERY_TYPE_5        string
+	QUERY_TYPE_5_OPTION string
+	QUERY_TYPE_5_VALUE  string
 }
 
 //argument를 받아서 새로운 table을 생성한다.
@@ -51,6 +56,9 @@ func CreateTable(t string) *query {
 		QUERY_TYPE_4:        "",
 		QUERY_TYPE_4_OPTION: "",
 		QUERY_TYPE_4_VALUE:  "",
+		QUERY_TYPE_5:        "",
+		QUERY_TYPE_5_OPTION: "",
+		QUERY_TYPE_5_VALUE:  "",
 	}
 
 	return q
@@ -77,6 +85,9 @@ func Select(c string) *query {
 		QUERY_TYPE_4:        "",
 		QUERY_TYPE_4_OPTION: "",
 		QUERY_TYPE_4_VALUE:  "",
+		QUERY_TYPE_5:        "",
+		QUERY_TYPE_5_OPTION: "",
+		QUERY_TYPE_5_VALUE:  "",
 	}
 
 	return q
@@ -125,6 +136,16 @@ func (q *query) Where(c string, v interface{}) *query {
 	return q
 }
 
+//And절 : where절 추가
+func (q *query) And(c string, v interface{}) *query {
+
+	q.QUERY_TYPE_5 = AND
+	q.QUERY_TYPE_5_OPTION = c
+	q.QUERY_TYPE_5_VALUE = fmt.Sprintf("='%v'", v)
+
+	return q
+}
+
 //argument로 table과 colume을 받는다.
 func Insert(t string, c string) *query {
 
@@ -143,6 +164,9 @@ func Insert(t string, c string) *query {
 		QUERY_TYPE_4:        "",
 		QUERY_TYPE_4_OPTION: "",
 		QUERY_TYPE_4_VALUE:  "",
+		QUERY_TYPE_5:        "",
+		QUERY_TYPE_5_OPTION: "",
+		QUERY_TYPE_5_VALUE:  "",
 	}
 
 	return q
@@ -190,6 +214,9 @@ func Update(t string) *query {
 		QUERY_TYPE_4:        "",
 		QUERY_TYPE_4_OPTION: "",
 		QUERY_TYPE_4_VALUE:  "",
+		QUERY_TYPE_5:        "",
+		QUERY_TYPE_5_OPTION: "",
+		QUERY_TYPE_5_VALUE:  "",
 	}
 
 	return q
@@ -251,6 +278,13 @@ func (q *query) ToString() string {
 	b.WriteString(q.QUERY_TYPE_4_OPTION)
 	b.WriteString(" ")
 	b.WriteString(q.QUERY_TYPE_4_VALUE)
+	b.WriteString(" ")
+
+	b.WriteString(q.QUERY_TYPE_5)
+	b.WriteString(" ")
+	b.WriteString(q.QUERY_TYPE_5_OPTION)
+	b.WriteString(" ")
+	b.WriteString(q.QUERY_TYPE_5_VALUE)
 	b.WriteString(" ")
 
 	return b.String()

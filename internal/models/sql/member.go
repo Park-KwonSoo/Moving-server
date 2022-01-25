@@ -99,9 +99,9 @@ func (m *Member) ChangePassword(pw string) error {
 func FindOneMemberById(id uint) (*Member, error) {
 	member := &Member{}
 
-	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, password").From("member").Where("id", id).ToString()
+	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, mem_position, password").From("member").Where("id", id).ToString()
 	sqlDB.SQL.QueryRow(query).Scan(
-		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.Password,
+		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.MemPosition, &member.Password,
 	)
 
 	if !member.MemId.Valid {
@@ -115,9 +115,9 @@ func FindOneMemberById(id uint) (*Member, error) {
 func FindOneMemberByMemId(memId string) (*Member, error) {
 	member := &Member{}
 
-	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, password").From("member").Where("mem_id", memId).ToString()
+	query := qb.Select("id, created_at, updated_at, mem_id, mem_type, mem_position, password").From("member").Where("mem_id", memId).ToString()
 	sqlDB.SQL.QueryRow(query).Scan(
-		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.Password,
+		&member.ID, &member.CreatedAt, &member.UpdatedAt, &member.MemId, &member.MemType, &member.MemPosition, &member.Password,
 	)
 
 	if !member.MemId.Valid {
