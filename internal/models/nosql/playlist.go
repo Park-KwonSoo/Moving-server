@@ -178,7 +178,9 @@ func UpdateOnePlaylist(playlist *Playlist) error {
 		"_id": playlist.ID,
 	}
 
-	if _, err := noSql.GetCollection("playlist").UpdateOne(context.TODO(), query, playlist); err != nil {
+	if _, err := noSql.GetCollection("playlist").UpdateOne(context.TODO(), query, bson.M{
+		"$set": playlist,
+	}); err != nil {
 		return err
 	}
 

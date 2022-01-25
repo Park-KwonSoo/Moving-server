@@ -13,6 +13,7 @@ type Album struct {
 	Album          string  `bson:"album"`
 	Artist         string  `bson:"artist"`
 	Genre          string  `bson:"genre"`
+	Description    string  `bson:"description"`
 	AlbumCoverUrl  string  `bson:"album_cover_url"`
 	Music          []Music `bson:"music"`
 }

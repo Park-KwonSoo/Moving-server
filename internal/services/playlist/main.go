@@ -107,6 +107,7 @@ func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetM
 
 /**
 *	Get Specifin Playlist By Platlist Id
+*	Doing Caching
  */
 func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistpb.GetSpecificPlaylistReq) (*playlistpb.GetSpecificPlaylistRes, error) {
 
@@ -117,7 +118,10 @@ func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistp
 		return getSpecificPlaylistReturnType(e, code, nil)
 	}
 
-	return getSpecificPlaylistReturnType(errHandler.ErrorRslt{}, nil, playlist)
+	rslt, err := getSpecificPlaylistReturnType(errHandler.ErrorRslt{}, nil, playlist)
+
+	return rslt, err
+
 }
 
 /**
@@ -213,7 +217,7 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 
 	memId := fmt.Sprintf("%v", ctx.Value("memId"))
 	if len(memId) == 0 {
-		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
+		e, code := errHandler.AuthorizedErr("AddNewMusicInPlaylist : Authorized User")
 
 		return &playlistpb.AddNewMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
@@ -233,7 +237,7 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
 	}
 
 	if memId != playlist.MemId {
-		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
+		e, code := errHandler.ForbiddenErr("AddNewMusicInPlaylist : Forbidden User")
 
 		return &playlistpb.AddNewMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
@@ -264,7 +268,7 @@ func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlis
 
 	memId := fmt.Sprintf("%v", ctx.Value("memId"))
 	if len(memId) == 0 {
-		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
+		e, code := errHandler.AuthorizedErr("RemoveMusicInPlaylist : Authorized User")
 
 		return &playlistpb.RemoveMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
@@ -275,7 +279,7 @@ func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlis
 	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
 	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
 	if err != nil {
-		e, code := errHandler.NotFoundErr("AddNewMusicInPlaylist : Not Found Playlist")
+		e, code := errHandler.NotFoundErr("RemoveMusicInPlaylist : Not Found Playlist")
 
 		return &playlistpb.RemoveMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
@@ -284,7 +288,7 @@ func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlis
 	}
 
 	if memId != playlist.MemId {
-		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
+		e, code := errHandler.ForbiddenErr("RemoveMusicInPlaylist : Forbidden User")
 
 		return &playlistpb.RemoveMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,
@@ -295,7 +299,7 @@ func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlis
 	err = nosqlModel.RemoveMusicInPlaylist(playlist, req.MusicIdList...)
 	if err != nil {
 		log.Println(err)
-		e, code := errHandler.BadRequestErr("AddNewMusicInPlaylist : Bad Request")
+		e, code := errHandler.BadRequestErr("RemoveMusicInPlaylist : Bad Request")
 
 		return &playlistpb.RemoveMusicInPlaylistRes{
 			RsltCd:  e.RsltCd,

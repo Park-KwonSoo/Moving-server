@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -24,15 +23,11 @@ func mongoConn() *mongo.Client {
 	opt := options.Client().ApplyURI(mongoUrl)
 
 	client, err := mongo.Connect(context.TODO(), opt)
-	if err != nil {
-		logrus.Error(err)
-	}
+	errHandler.PanicErr(err)
 
 	//connection check
 	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		logrus.Error(err)
-	}
+	errHandler.PanicErr(err)
 
 	log.Println("Mongo DB Connected!")
 	return client

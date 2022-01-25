@@ -2,6 +2,7 @@ package jwtutility
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -15,10 +16,16 @@ type accessToken struct {
 }
 
 //memId를 바탕으로 token을 발급
-func GetJwtToken(memId string) (string, error) {
+func GenerateJwtToken(memId string) (string, error) {
+
+	expirationHour, err := strconv.Atoi(os.Getenv("TOKEN_EXPIRATION_HOUR"))
+	if err != nil {
+		return "", err
+	}
+
 	claims := &accessToken{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(), //30일 토큰
+			ExpiresAt: time.Now().Add(time.Hour * time.Duration(expirationHour)).Unix(), //expiration Hour시간만큼의 만료기간
 		},
 		UserId: memId,
 	}

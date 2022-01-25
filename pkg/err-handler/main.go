@@ -2,8 +2,8 @@ package errhandler
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -15,7 +15,7 @@ type ErrorRslt struct {
 
 func PanicErr(err error) {
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		panic(err)
 	}
 }

@@ -79,7 +79,6 @@ func (s *RegisterServer) Register(ctx context.Context, req *authpb.RegisterReq) 
 func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.LoginRes, error) {
 
 	memId := req.MemId
-
 	member, err := sqlModel.FindOneMemberByMemId(memId)
 	if err != nil {
 		e, code := errHandler.NotFoundErr("Login : Not Found User")
@@ -100,7 +99,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 		}, code
 	}
 
-	token, err := jwtUtil.GetJwtToken(memId)
+	token, err := jwtUtil.GenerateJwtToken(memId)
 
 	if err != nil {
 		e, code := errHandler.AuthorizedErr("Login : Token Authorized")
