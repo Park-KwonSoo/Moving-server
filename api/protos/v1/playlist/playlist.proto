@@ -64,7 +64,8 @@ message SpecificPlaylist {
     string createdAt = 2;
     string updatedAt = 3;
     string playlistName = 4;
-    repeated Music musicList = 5;
+    uint64 numOfLike = 5;
+    repeated Music musicList = 6;
 }
 
 message GetSpecificPlaylistReq {

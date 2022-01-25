@@ -75,6 +75,23 @@ func HavePlaylistLikeByMemIdAndPlaylistId(memId string, playlistId string) (bool
 	return true, err
 }
 
+/**
+*	Count Db in playlistLike Table By MemId And PlaylistId
+ */
+func CountPlaylistLikePlaylistId(playlistId string) (int, error) {
+
+	var count int
+
+	query := qb.Select("count(*)").
+		From("playlist_like").
+		Where("playlist_id", playlistId).
+		ToString()
+
+	err := sqlDB.SQL.QueryRow(query).Scan(&count)
+
+	return count, err
+}
+
 func init() {
 	if err := playlistLikeMigrate(); err != nil {
 		logrus.Error(err)

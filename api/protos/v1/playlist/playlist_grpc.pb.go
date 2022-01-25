@@ -34,7 +34,7 @@ type PlaylistServiceClient interface {
 	AddNewMusicInPlaylist(ctx context.Context, in *AddNewMusicInPlaylistReq, opts ...grpc.CallOption) (*AddNewMusicInPlaylistRes, error)
 	//특정 플레이리스트에서 곡 제거
 	RemoveMusicInPlaylist(ctx context.Context, in *RemoveMusicInPlaylistReq, opts ...grpc.CallOption) (*RemoveMusicInPlaylistRes, error)
-	//플레이리스트에 좋아요 기능
+	//플레이리스트에 좋아요 기능 : 플레이리스트의 주인이 아닌 사람만 좋아요가 가능함.
 	LikePlaylist(ctx context.Context, in *LikePlaylistReq, opts ...grpc.CallOption) (*LikePlaylistRes, error)
 }
 
@@ -125,7 +125,7 @@ type PlaylistServiceServer interface {
 	AddNewMusicInPlaylist(context.Context, *AddNewMusicInPlaylistReq) (*AddNewMusicInPlaylistRes, error)
 	//특정 플레이리스트에서 곡 제거
 	RemoveMusicInPlaylist(context.Context, *RemoveMusicInPlaylistReq) (*RemoveMusicInPlaylistRes, error)
-	//플레이리스트에 좋아요 기능
+	//플레이리스트에 좋아요 기능 : 플레이리스트의 주인이 아닌 사람만 좋아요가 가능함.
 	LikePlaylist(context.Context, *LikePlaylistReq) (*LikePlaylistRes, error)
 	mustEmbedUnimplementedPlaylistServiceServer()
 }

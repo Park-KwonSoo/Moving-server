@@ -49,7 +49,7 @@ func getPlaylistReturnType(e errHandler.ErrorRslt, code error, playlist []*nosql
 }
 
 //specific playlist return type
-func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylist *nosqlModel.Playlist) (*playlistpb.GetSpecificPlaylistRes, error) {
+func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylist *nosqlModel.Playlist, numberOfLike int) (*playlistpb.GetSpecificPlaylistRes, error) {
 
 	if myPlaylist == nil {
 		return &playlistpb.GetSpecificPlaylistRes{
@@ -63,6 +63,7 @@ func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylis
 		CreatedAt:    myPlaylist.CreatedAt.String(),
 		UpdatedAt:    myPlaylist.UpdatedAt.String(),
 		PlaylistName: myPlaylist.PlaylistName,
+		NumOfLike:    uint64(numberOfLike),
 		MusicList:    make([]*playlistpb.Music, 0),
 	}
 
@@ -116,15 +117,59 @@ func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetM
 func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistpb.GetSpecificPlaylistReq) (*playlistpb.GetSpecificPlaylistRes, error) {
 
 	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
-	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
-	if err != nil {
-		e, code := errHandler.NotFoundErr("GetSpecificPlaylist : Not Found Playlist")
-		return getSpecificPlaylistReturnType(e, code, nil)
+
+	//플레이리스트 가져오는 채널
+	playListChan := make(chan *nosqlModel.Playlist)
+	//좋아요 수 가져오는 채널
+	countChan := make(chan int)
+
+	chanErr := make(chan error)
+	chanRslt := make(chan *playlistpb.GetSpecificPlaylistRes)
+
+	go func() {
+		playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
+		if err != nil {
+			e, code := errHandler.NotFoundErr("GetSpecificPlaylist : Not Found Playlist")
+			rslt, _ := getSpecificPlaylistReturnType(e, code, nil, 0)
+
+			chanErr <- code
+			chanRslt <- rslt
+			playListChan <- nil
+
+			return
+		}
+		chanErr <- nil
+		chanRslt <- nil
+		playListChan <- playlist
+	}()
+
+	go func() {
+		count, err := sqlModel.CountPlaylistLikePlaylistId(req.PlaylistId)
+		if err != nil {
+			e, code := errHandler.BadRequestErr("GetSpecificPlaylist : SQL Query Error")
+			rslt, _ := getSpecificPlaylistReturnType(e, code, nil, 0)
+
+			chanErr <- code
+			chanRslt <- rslt
+			countChan <- 0
+
+			return
+		}
+
+		chanErr <- nil
+		chanRslt <- nil
+		countChan <- count
+	}()
+
+	for i := 0; i < 2; i++ {
+		if err := <-chanErr; err != nil {
+			return <-chanRslt, err
+		} else {
+			<-chanRslt
+		}
 	}
 
-	rslt, err := getSpecificPlaylistReturnType(errHandler.ErrorRslt{}, nil, playlist)
-
-	return rslt, err
+	return getSpecificPlaylistReturnType(errHandler.ErrorRslt{}, nil, <-playListChan, <-countChan)
 
 }
 
@@ -329,41 +374,69 @@ func (s *PlaylistServer) LikePlaylist(ctx context.Context, req *playlistpb.LikeP
 		}, code
 	}
 
-	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
-	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
-	if err != nil {
-		e, code := errHandler.BadRequestErr("LikePlaylist : Not Right PlaylistId")
+	chanErr := make(chan error)
+	chanRslt := make(chan *playlistpb.LikePlaylistRes)
 
-		return &playlistpb.LikePlaylistRes{
-			RsltCd:  e.RsltCd,
-			RsltMsg: e.RsltMsg,
-		}, code
-	}
-	if playlist.MemId == memId {
-		e, code := errHandler.BadRequestErr("LikePlaylist : Playlist Owner Can't Do like")
+	go func() {
+		playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
+		playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
+		if err != nil {
+			e, code := errHandler.BadRequestErr("LikePlaylist : Not Right PlaylistId")
+			chanErr <- code
+			chanRslt <- &playlistpb.LikePlaylistRes{
+				RsltCd:  e.RsltCd,
+				RsltMsg: e.RsltMsg,
+			}
 
-		return &playlistpb.LikePlaylistRes{
-			RsltCd:  e.RsltCd,
-			RsltMsg: e.RsltMsg,
-		}, code
-	}
+			return
 
-	hadLike, err := sqlModel.HavePlaylistLikeByMemIdAndPlaylistId(memId, req.PlaylistId)
-	if err != nil {
-		e, code := errHandler.BadRequestErr("LikePlaylist : Find Like Log Error")
+		}
+		if playlist.MemId == memId {
+			e, code := errHandler.BadRequestErr("LikePlaylist : Playlist Owner Can't Do like")
+			chanErr <- code
+			chanRslt <- &playlistpb.LikePlaylistRes{
+				RsltCd:  e.RsltCd,
+				RsltMsg: e.RsltMsg,
+			}
 
-		return &playlistpb.LikePlaylistRes{
-			RsltCd:  e.RsltCd,
-			RsltMsg: e.RsltMsg,
-		}, code
-	}
-	if !hadLike {
-		e, code := errHandler.BadRequestErr("LikePlaylist : You Already Like")
+			return
+		}
 
-		return &playlistpb.LikePlaylistRes{
-			RsltCd:  e.RsltCd,
-			RsltMsg: e.RsltMsg,
-		}, code
+		chanErr <- nil
+		chanRslt <- nil
+	}()
+
+	go func() {
+		hadLike, err := sqlModel.HavePlaylistLikeByMemIdAndPlaylistId(memId, req.PlaylistId)
+		if err != nil {
+			e, code := errHandler.BadRequestErr("LikePlaylist : Find Like Log Error")
+			chanErr <- code
+			chanRslt <- &playlistpb.LikePlaylistRes{
+				RsltCd:  e.RsltCd,
+				RsltMsg: e.RsltMsg,
+			}
+
+			return
+		}
+		if !hadLike {
+			e, code := errHandler.BadRequestErr("LikePlaylist : You Already Like")
+			chanErr <- code
+			chanRslt <- &playlistpb.LikePlaylistRes{
+				RsltCd:  e.RsltCd,
+				RsltMsg: e.RsltMsg,
+			}
+
+			return
+		}
+
+		chanErr <- nil
+		chanRslt <- nil
+	}()
+
+	for i := 0; i < 2; i++ {
+		if err := <-chanErr; err != nil {
+			return <-chanRslt, err
+		}
 	}
 
 	playlistLike := &sqlModel.PlaylistLike{
@@ -371,7 +444,7 @@ func (s *PlaylistServer) LikePlaylist(ctx context.Context, req *playlistpb.LikeP
 		PlaylistId: req.PlaylistId,
 	}
 
-	err = sqlModel.CreateNewPlaylistLike(playlistLike)
+	err := sqlModel.CreateNewPlaylistLike(playlistLike)
 	if err != nil {
 		e, code := errHandler.BadRequestErr("LikePlaylist : Create PlaylistLike error")
 
