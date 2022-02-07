@@ -114,7 +114,7 @@ func (s *MusicServer) GetMusicByKeyword(ctx context.Context, req *musicpb.GetMus
 
 func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer) error {
 
-	memId := fmt.Sprintf("%v", stream.Context().Value("memId"))
+	memId := stream.Context().Value("memId").(string)
 	if len(memId) == 0 {
 		_, code := errHandler.AuthorizedErr("AddNewMusic : Validate Token Error")
 		return code
@@ -200,7 +200,7 @@ func (s *MusicServer) AddNewMusic(stream musicpb.MusicService_AddNewMusicServer)
 
 func (s *MusicServer) AddNewAlbum(stream musicpb.MusicService_AddNewAlbumServer) error {
 
-	memId := fmt.Sprintf("%v", stream.Context().Value("memId"))
+	memId := stream.Context().Value("memId").(string)
 	if len(memId) == 0 {
 		_, code := errHandler.AuthorizedErr("AddNewAlbum : Validate Token Error")
 		return code
@@ -255,7 +255,7 @@ func (s *MusicServer) AddNewAlbum(stream musicpb.MusicService_AddNewAlbumServer)
 
 func (s *MusicServer) ListenMusic(ctx context.Context, req *musicpb.ListenMusicReq) (*musicpb.ListenMusicRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		_, code := errHandler.AuthorizedErr("ListenMusic : Not Authorized")
 		return &musicpb.ListenMusicRes{}, code

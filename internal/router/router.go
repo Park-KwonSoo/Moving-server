@@ -43,17 +43,17 @@ func authInterceptor(ctx context.Context) (context.Context, error) {
 		return newCtx, nil
 	}
 
-	memId, _ := jwtUtil.ValidateToken(token)
+	memId, err := jwtUtil.ValidateToken(token)
 
 	newCtx := context.WithValue(ctx, "memId", memId)
-	return newCtx, nil
+	return newCtx, err
 }
 
 //cache를 위한 custom unary interceptor
 func customCacheUnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		resp, err := handler(ctx, req)
-		return resp, err
+		res, err := handler(ctx, req)
+		return res, err
 	}
 }
 
@@ -119,6 +119,7 @@ func SetupRouter() {
 			customCacheStreamInterceptor(),
 		)),
 	)
+
 	//서비스 등록
 	registerService(s)
 	reflection.Register(s)

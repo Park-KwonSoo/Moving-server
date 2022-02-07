@@ -3,7 +3,6 @@ package auth_service
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
 
@@ -119,7 +118,7 @@ func (s *LoginServer) Login(ctx context.Context, req *authpb.LoginReq) (*authpb.
 
 func (s *LoginServer) PasswordCheck(ctx context.Context, req *authpb.PasswordCheckReq) (*authpb.PasswordCheckRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("JWT Token Validate : Authorized Error")
 
@@ -150,7 +149,7 @@ func (s *LoginServer) PasswordCheck(ctx context.Context, req *authpb.PasswordChe
 
 func (s *LoginServer) PasswordChange(ctx context.Context, req *authpb.PasswordChangeReq) (*authpb.PasswordChangeRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("JWT Token Validate : Authorized Error")
 

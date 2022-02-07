@@ -2,7 +2,6 @@ package playlist_service
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -96,7 +95,7 @@ func getSpecificPlaylistReturnType(e errHandler.ErrorRslt, code error, myPlaylis
  */
 func (s *PlaylistServer) GetMyPlaylist(ctx context.Context, req *playlistpb.GetMyPlaylistReq) (*playlistpb.GetMyPlaylistRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("GetMyPlaylist : Validate Token Error")
 		return getPlaylistReturnType(e, code, nil)
@@ -178,7 +177,7 @@ func (s *PlaylistServer) GetSpecificPlaylist(ctx context.Context, req *playlistp
  */
 func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.CreateNewPlaylistReq) (*playlistpb.CreateNewPlaylistRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("CreateNewPlaylist : Authorized User")
 
@@ -218,7 +217,7 @@ func (s *PlaylistServer) CreateNewPlaylist(ctx context.Context, req *playlistpb.
  */
 func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.UpdatePlaylistReq) (*playlistpb.UpdatePlaylistRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("UpdatePlaylist : Authorized User")
 
@@ -229,7 +228,7 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
 	}
 
 	playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
-	playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
+	playlist, _ := nosqlModel.FindOnePlaylistById(playlistId)
 	if playlist.MemId != memId {
 		e, code := errHandler.ForbiddenErr("UpdatePlaylist : Forbidden User")
 
@@ -243,7 +242,7 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
 		playlist.PlaylistName = req.PlaylistName
 	}
 
-	err = nosqlModel.UpdateOnePlaylist(playlist)
+	err := nosqlModel.UpdateOnePlaylist(playlist)
 	if err != nil {
 		e, code := errHandler.BadRequestErr("UpdatePlaylist : Update Failed")
 
@@ -264,7 +263,7 @@ func (s *PlaylistServer) UpdatePlaylist(ctx context.Context, req *playlistpb.Upd
  */
 func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlistpb.AddNewMusicInPlaylistReq) (*playlistpb.AddNewMusicInPlaylistRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("AddNewMusicInPlaylist : Authorized User")
 
@@ -315,7 +314,7 @@ func (s *PlaylistServer) AddNewMusicInPlaylist(ctx context.Context, req *playlis
  */
 func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlistpb.RemoveMusicInPlaylistReq) (*playlistpb.RemoveMusicInPlaylistRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("RemoveMusicInPlaylist : Authorized User")
 
@@ -362,9 +361,14 @@ func (s *PlaylistServer) RemoveMusicInPlaylist(ctx context.Context, req *playlis
 	}, nil
 }
 
+type LikePlaylistStruct struct {
+	LikePlaylistRes *playlistpb.LikePlaylistRes
+	Err             error
+}
+
 func (s *PlaylistServer) LikePlaylist(ctx context.Context, req *playlistpb.LikePlaylistReq) (*playlistpb.LikePlaylistRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("LikePlaylist : Authorized User")
 
@@ -374,18 +378,20 @@ func (s *PlaylistServer) LikePlaylist(ctx context.Context, req *playlistpb.LikeP
 		}, code
 	}
 
-	chanErr := make(chan error)
-	chanRslt := make(chan *playlistpb.LikePlaylistRes)
+	//chanel
+	chanRslt := make(chan *LikePlaylistStruct)
 
 	go func() {
 		playlistId, _ := primitive.ObjectIDFromHex(req.PlaylistId)
 		playlist, err := nosqlModel.FindOnePlaylistById(playlistId)
 		if err != nil {
 			e, code := errHandler.BadRequestErr("LikePlaylist : Not Right PlaylistId")
-			chanErr <- code
-			chanRslt <- &playlistpb.LikePlaylistRes{
-				RsltCd:  e.RsltCd,
-				RsltMsg: e.RsltMsg,
+			chanRslt <- &LikePlaylistStruct{
+				LikePlaylistRes: &playlistpb.LikePlaylistRes{
+					RsltCd:  e.RsltCd,
+					RsltMsg: e.RsltMsg,
+				},
+				Err: code,
 			}
 
 			return
@@ -393,49 +399,54 @@ func (s *PlaylistServer) LikePlaylist(ctx context.Context, req *playlistpb.LikeP
 		}
 		if playlist.MemId == memId {
 			e, code := errHandler.BadRequestErr("LikePlaylist : Playlist Owner Can't Do like")
-			chanErr <- code
-			chanRslt <- &playlistpb.LikePlaylistRes{
-				RsltCd:  e.RsltCd,
-				RsltMsg: e.RsltMsg,
+			chanRslt <- &LikePlaylistStruct{
+				LikePlaylistRes: &playlistpb.LikePlaylistRes{
+					RsltCd:  e.RsltCd,
+					RsltMsg: e.RsltMsg,
+				},
+				Err: code,
 			}
 
 			return
 		}
 
-		chanErr <- nil
 		chanRslt <- nil
+
 	}()
 
 	go func() {
 		hadLike, err := sqlModel.HavePlaylistLikeByMemIdAndPlaylistId(memId, req.PlaylistId)
 		if err != nil {
 			e, code := errHandler.BadRequestErr("LikePlaylist : Find Like Log Error")
-			chanErr <- code
-			chanRslt <- &playlistpb.LikePlaylistRes{
-				RsltCd:  e.RsltCd,
-				RsltMsg: e.RsltMsg,
+			chanRslt <- &LikePlaylistStruct{
+				LikePlaylistRes: &playlistpb.LikePlaylistRes{
+					RsltCd:  e.RsltCd,
+					RsltMsg: e.RsltMsg,
+				},
+				Err: code,
 			}
 
 			return
 		}
 		if !hadLike {
 			e, code := errHandler.BadRequestErr("LikePlaylist : You Already Like")
-			chanErr <- code
-			chanRslt <- &playlistpb.LikePlaylistRes{
-				RsltCd:  e.RsltCd,
-				RsltMsg: e.RsltMsg,
+			chanRslt <- &LikePlaylistStruct{
+				LikePlaylistRes: &playlistpb.LikePlaylistRes{
+					RsltCd:  e.RsltCd,
+					RsltMsg: e.RsltMsg,
+				},
+				Err: code,
 			}
 
 			return
 		}
 
-		chanErr <- nil
 		chanRslt <- nil
 	}()
 
 	for i := 0; i < 2; i++ {
-		if err := <-chanErr; err != nil {
-			return <-chanRslt, err
+		if rslt := <-chanRslt; rslt != nil {
+			return rslt.LikePlaylistRes, rslt.Err
 		}
 	}
 

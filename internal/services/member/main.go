@@ -2,7 +2,6 @@ package member_service
 
 import (
 	"context"
-	"fmt"
 
 	memberpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/member"
 
@@ -58,7 +57,7 @@ func getProfileReturnType(e errHandler.ErrorRslt, code error, profile *sqlModel.
  */
 func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProfileReq) (*memberpb.GetMyProfileRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("GetMyProfile : Validate Token Error")
 		return getProfileReturnType(e, code, nil)
@@ -78,7 +77,7 @@ func (s *MemberServer) GetMyProfile(ctx context.Context, req *memberpb.GetMyProf
  */
 func (s *MemberServer) UpdateMyProfile(ctx context.Context, req *memberpb.UpdateMyProfileReq) (*memberpb.UpdateMyProfileRes, error) {
 
-	memId := fmt.Sprintf("%v", ctx.Value("memId"))
+	memId := ctx.Value("memId").(string)
 	if len(memId) == 0 {
 		e, code := errHandler.AuthorizedErr("UpdateMyProfile : Validate Token Error")
 
