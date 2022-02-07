@@ -121,6 +121,7 @@ func SetupRouter() {
 	)
 	//서비스 등록
 	registerService(s)
+	//테스트용 주석
 	reflection.Register(s)
 
 	log.Printf("Start gRPC Server on %s server", port)
