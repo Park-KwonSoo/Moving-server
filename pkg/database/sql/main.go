@@ -6,11 +6,13 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"database/sql"
 
 	_ "github.com/lib/pq"
+	"github.com/mattn/pqssh"
 
 	errHandler "github.com/Park-Kwonsoo/moving-server/pkg/err-handler"
 	getTag "github.com/Park-Kwonsoo/moving-server/pkg/get-struct-info"
@@ -119,6 +121,17 @@ func init() {
 	e := godotenv.Load(".env")
 	errHandler.PanicErr(e)
 
+	//ssh Driver
+	sshPort, _ := strconv.Atoi(os.Getenv("SSH_HOST_PORT"))
+	sshDriver := &pqssh.Driver{
+		Hostname: os.Getenv("SSH_HOST_NAME"),
+		Port:     sshPort,
+		Username: os.Getenv("SSH_HOST_USER_NAME"),
+		Password: os.Getenv("SSH_HOST_USER_PASSWORD"),
+	}
+
+	sql.Register("postgres+ssh", sshDriver)
+
 	//SQL db
 	SQL.Host = "127.0.0.1"
 	SQL.Port = 5432
@@ -133,7 +146,7 @@ func init() {
 		SQL.Host, SQL.Port, SQL.User, SQL.Password, SQL.DbName, SQL.Schema)
 
 	var err error
-	SQL.Db, err = sql.Open("postgres", SQLconn)
+	SQL.Db, err = sql.Open("postgres+ssh", SQLconn)
 
 	errHandler.PanicErr(err)
 	log.Println("PostgreSQL Connected!")
