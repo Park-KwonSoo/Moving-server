@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
+	sqlModel "github.com/Park-Kwonsoo/moving-server/internal/models/sql"
+	redisClient "github.com/Park-Kwonsoo/moving-server/pkg/cache-server"
 	jwtUtil "github.com/Park-Kwonsoo/moving-server/pkg/jwt-utility"
 
 	authpb "github.com/Park-Kwonsoo/moving-server/api/protos/v1/auth"
@@ -43,8 +45,32 @@ func authInterceptor(ctx context.Context) (context.Context, error) {
 		return newCtx, nil
 	}
 
-	memId, err := jwtUtil.ValidateToken(token)
+	//cache를 확인
+	value, _ := redisClient.GetCache(token)
+	if len(value) > 0 {
+		//cache가 있으면 해당 cache value값으로 리턴
+		newCtx := context.WithValue(ctx, "memId", string(value[:]))
+		return newCtx, nil
+	}
 
+	//jwt로 토큰 검증
+	memId, err := jwtUtil.ValidateToken(token)
+	if err != nil {
+		//검증 실패시 memId return
+		newCtx := context.WithValue(ctx, "memId", "")
+		return newCtx, nil
+	}
+
+	//현재 사용중인 유저인지 검증
+	rslt, err := sqlModel.IsOneMemberExistByMemIdAndUseYn(memId, "Y")
+	if !rslt {
+		//탈퇴한 유저라면 memId로 등록하지 않는다.
+		newCtx := context.WithValue(ctx, "memId", "")
+		return newCtx, err
+	}
+
+	//만약 위의 과정 모두 통과한다면 redis에 key , value값 설정한 후 리턴
+	redisClient.SetCache(token, memId)
 	newCtx := context.WithValue(ctx, "memId", memId)
 	return newCtx, err
 }

@@ -128,6 +128,23 @@ func FindOneMemberByMemId(memId string) (*Member, error) {
 	return member, nil
 }
 
+//한 명의 멤버가 존재하는지 확인하는 함수
+func IsOneMemberExistByMemIdAndUseYn(memId string, useYn string) (bool, error) {
+
+	id := ""
+
+	query := qb.Select("id").From("member").Where("mem_id", memId).And("use_yn", useYn).ToString()
+	err := sqlDB.SQL.QueryRow(query).Scan(
+		&id,
+	)
+
+	if len(id) > 0 {
+		return true, err
+	}
+
+	return false, err
+}
+
 func init() {
 	if err := memberMigrate(); err != nil {
 		logrus.Error(err)

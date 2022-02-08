@@ -27,13 +27,14 @@ func Connect() error {
 
 	//1번 DB에 연결함
 	Redis = redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_URL"),
+		Addr:     os.Getenv("REDIS_HOST"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 		DB:       1,
 	})
 
 	_, err := Redis.Ping().Result()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
