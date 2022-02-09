@@ -4,9 +4,23 @@ package v1.member_proto;
 
 option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/member";
 
+import "api/protos/google/api/annotations.proto";
+
 service MemberService {
-    rpc GetMyProfile(GetMyProfileReq) returns (GetMyProfileRes) {};
-    rpc UpdateMyProfile(UpdateMyProfileReq) returns (UpdateMyProfileRes) {};
+    //내 프로필 정보 조회
+    rpc GetMyProfile(GetMyProfileReq) returns (GetMyProfileRes) {
+        option (google.api.http) = {
+            get : "/my"
+        };
+    };
+
+    //내 프로필 정보 업데이트
+    rpc UpdateMyProfile(UpdateMyProfileReq) returns (UpdateMyProfileRes) {
+        option (google.api.http) = {
+            patch : "/my"
+            body : "*"
+        };
+    };
 }
 
 message Member {

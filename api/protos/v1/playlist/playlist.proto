@@ -4,27 +4,61 @@ package v1.playlist_proto;
 
 option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/playlist";
 
+import "api/protos/google/api/annotations.proto";
+
 service PlaylistService {
     //내 플레이리스트 목록 조회
-    rpc GetMyPlaylist(GetMyPlaylistReq) returns (GetMyPlaylistRes) {};
+    rpc GetMyPlaylist(GetMyPlaylistReq) returns (GetMyPlaylistRes) {
+        option (google.api.http) = {
+            get : "/playlist"
+        };
+    };
 
     //특정 플레이리스트 조회
-    rpc GetSpecificPlaylist(GetSpecificPlaylistReq) returns (GetSpecificPlaylistRes) {};
+    rpc GetSpecificPlaylist(GetSpecificPlaylistReq) returns (GetSpecificPlaylistRes) {
+        option (google.api.http) = {
+            get : "/playlist/{playlistId}"
+        };
+    };
 
     //새 플레이리스트 생성
-    rpc CreateNewPlaylist(CreateNewPlaylistReq) returns (CreateNewPlaylistRes) {};
+    rpc CreateNewPlaylist(CreateNewPlaylistReq) returns (CreateNewPlaylistRes) {
+        option (google.api.http) = {
+            post : "/playlist"
+            body : "*"
+        };
+    };
 
     //기존 플레이리스트 정보 업데이트
-    rpc UpdatePlaylist(UpdatePlaylistReq) returns (UpdatePlaylistRes) {};
+    rpc UpdatePlaylist(UpdatePlaylistReq) returns (UpdatePlaylistRes) {
+        option (google.api.http) = {
+            patch : "/playlist/{playlistId}"
+            body : "*"
+        };
+    };
 
     //특정 플레이리스트에 곡 추가
-    rpc AddNewMusicInPlaylist(AddNewMusicInPlaylistReq) returns (AddNewMusicInPlaylistRes) {};
+    rpc AddNewMusicInPlaylist(AddNewMusicInPlaylistReq) returns (AddNewMusicInPlaylistRes) {
+        option (google.api.http) = {
+            patch : "/playlist/add-music/{playlistId}"
+            body : "*"
+        };
+    };
 
     //특정 플레이리스트에서 곡 제거
-    rpc RemoveMusicInPlaylist(RemoveMusicInPlaylistReq) returns (RemoveMusicInPlaylistRes) {};
+    rpc RemoveMusicInPlaylist(RemoveMusicInPlaylistReq) returns (RemoveMusicInPlaylistRes) {
+        option (google.api.http) = {
+            post : "/playlist/remove-music/{playlistId}"
+            body : "*"
+        };
+    };
 
     //플레이리스트에 좋아요 기능 : 플레이리스트의 주인이 아닌 사람만 좋아요가 가능함.
-    rpc LikePlaylist(LikePlaylistReq) returns (LikePlaylistRes) {};
+    rpc LikePlaylist(LikePlaylistReq) returns (LikePlaylistRes) {
+        option (google.api.http) = {
+            post : "/playlist/like/{playlistId}"
+        };
+    };
 }
 
 message SimplePlaylist {

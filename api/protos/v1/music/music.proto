@@ -4,21 +4,45 @@ package v1.music_proto;
 
 option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/music";
 
+import "api/protos/google/api/annotations.proto";
+
 service MusicService {
     //한 곡의 상세 정보를 가져옴
-    rpc GetMusicDetail(GetMusicDetailReq) returns (GetMusicDetailRes) {};
+    rpc GetMusicDetail(GetMusicDetailReq) returns (GetMusicDetailRes) {
+        option (google.api.http) = {
+            get : "/music/{musicId}"
+        };
+    };
     
     //키워드를 바탕으로 일치하는 키워드를 가진 곡의 정보를 가져옴
-    rpc GetMusicByKeyword(GetMusicByKeywordReq) returns (GetMusicByKeywordRes) {};
+    rpc GetMusicByKeyword(GetMusicByKeywordReq) returns (GetMusicByKeywordRes) {
+        option (google.api.http) = {
+            get : "/music"
+        };
+    };
 
     //새로운 음악 파일을 등록함 : 관리자만 사용 가능
-    rpc AddNewMusic(stream AddNewMusicReq) returns (AddNewMusicRes) {};
+    rpc AddNewMusic(stream AddNewMusicReq) returns (AddNewMusicRes) {
+        option (google.api.http) = {
+            post : "/music"
+            body : "*"
+        };
+    };
 
     //새로운 앨범을 등록함 : 관리자만 사용 가능
-    rpc AddNewAlbum(stream AddNewAlbumReq) returns (AddNewAlbumRes) {};
+    rpc AddNewAlbum(stream AddNewAlbumReq) returns (AddNewAlbumRes) {
+        option (google.api.http) = {
+            post : "/music/album"
+            body : "*"
+        };
+    };
 
     //음악을 전부 들었을 때, 조회수를 증가시키는 기능
-    rpc ListenMusic(ListenMusicReq) returns (ListenMusicRes) {};
+    rpc ListenMusic(ListenMusicReq) returns (ListenMusicRes) {
+        option (google.api.http) = {
+            get : "/music/listen"
+        };
+    };
 }
 
 message Music {

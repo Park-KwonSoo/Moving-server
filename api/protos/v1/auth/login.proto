@@ -4,22 +4,32 @@ package v1.login_proto;
 
 option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/auth";
 
-// import "api/protos/google/api/annotations.proto";
+import "api/protos/google/api/annotations.proto";
 
 service LoginService {
     //로그인 api
     rpc Login(LoginReq) returns (LoginRes) {
-        // option (google.api.http) = { 
-        //     post : "/auth/login" 
-        //     body : "request"
-        // };
+        option (google.api.http) = { 
+            post : "/auth/login" 
+            body : "*"
+        };
     };
 
     //비밀번호를 입력받아, 올바른 비밀번호인지의 여부를 리턴함
-    rpc PasswordCheck(PasswordCheckReq) returns (PasswordCheckRes) {};
+    rpc PasswordCheck(PasswordCheckReq) returns (PasswordCheckRes) {
+        option (google.api.http) = {
+            post : "/auth/password"
+            body : "*"
+        };
+    };
 
     //새로운 비밀번호로 비밀번호를 변경함
-    rpc PasswordChange(PasswordChangeReq) returns (PasswordChangeRes) {};
+    rpc PasswordChange(PasswordChangeReq) returns (PasswordChangeRes) {
+        option (google.api.http) = {
+            patch : "/auth/password"
+            body : "*"
+        };
+    };
 }
 
 message LoginReq {

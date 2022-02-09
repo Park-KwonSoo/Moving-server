@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	port = ":9000"
+	grpcPort = ":9000"
 )
 
 //유저 인증 JWT 토큰 Interceptor : token값을 decode하여 memId를 전달
@@ -104,8 +104,8 @@ func registerService(s *grpc.Server) {
 }
 
 //grpc Router 등록
-func SetupRouter() {
-	lis, err := net.Listen("tcp", port)
+func SetupGRPCRouter() {
+	lis, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Fatalln("Failed to Listen :", err)
 	}
@@ -150,7 +150,7 @@ func SetupRouter() {
 	registerService(s)
 	reflection.Register(s)
 
-	log.Printf("Start gRPC Server on %s server", port)
+	log.Printf("Start gRPC Server on %s server", grpcPort)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalln("Failed to Open gRPC Server :", err)
 	}

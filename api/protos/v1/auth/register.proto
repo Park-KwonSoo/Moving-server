@@ -4,15 +4,15 @@ package v1.register_proto;
 
 option go_package = "github.com/Park-Kwonsoo/Moving-server/api/protos/v1/auth";
 
-// import "api/protos/google/api/annotations.proto";
+import "api/protos/google/api/annotations.proto";
 
 service RegisterService {
     //회원가입 api
     rpc Register(RegisterReq) returns (RegisterRes) {
-        // option (google.api.http) = {
-        //     post : "/auth/register" 
-        //     body : "request"
-        // };
+        option (google.api.http) = {
+            post : "/auth/register" 
+            body : "*"
+        };
     };
 }
 

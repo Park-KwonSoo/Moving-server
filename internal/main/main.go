@@ -12,11 +12,16 @@ import (
 func main() {
 
 	var wait sync.WaitGroup
-	wait.Add(3)
+	wait.Add(4)
 
 	go func() {
 		defer wait.Done()
-		Router.SetupRouter()
+		Router.SetupGRPCRouter()
+	}()
+
+	go func() {
+		defer wait.Done()
+		Router.SetupRESTRouter()
 	}()
 
 	go func() {
