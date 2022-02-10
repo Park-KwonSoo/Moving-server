@@ -1,4 +1,4 @@
-PROTOC = protoc -I=. \
+PROTOC = protoc -I . \
 	--go_out . --go_opt paths=source_relative \
 	--go-grpc_out . --go-grpc_opt paths=source_relative
 
@@ -10,9 +10,10 @@ PROTOC_GRPC_GATEWAY = protoc -I . --grpc-gateway_out . \
 PROTO_DIR_V1 = api/protos/v1
 PROTO_DIR_V2 = api/protos/v2
 
-all : login login_gateway register register_gateway member member_gateway playlist playlist_gateway music music_gateway
-gateway : login_gateway register_gateway member_gateway playlist_gateway music_gateway
+all : pb gw
 
+pb : login register member playlist music
+gw : login_gateway register_gateway member_gateway playlist_gateway music_gateway
 
 login :
 	$(PROTOC) $(PROTO_DIR_V1)/auth/login.proto

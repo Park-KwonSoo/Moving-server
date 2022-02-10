@@ -22,7 +22,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MemberServiceClient interface {
+	//내 프로필 정보 조회
 	GetMyProfile(ctx context.Context, in *GetMyProfileReq, opts ...grpc.CallOption) (*GetMyProfileRes, error)
+	//내 프로필 정보 업데이트
 	UpdateMyProfile(ctx context.Context, in *UpdateMyProfileReq, opts ...grpc.CallOption) (*UpdateMyProfileRes, error)
 }
 
@@ -56,7 +58,9 @@ func (c *memberServiceClient) UpdateMyProfile(ctx context.Context, in *UpdateMyP
 // All implementations must embed UnimplementedMemberServiceServer
 // for forward compatibility
 type MemberServiceServer interface {
+	//내 프로필 정보 조회
 	GetMyProfile(context.Context, *GetMyProfileReq) (*GetMyProfileRes, error)
+	//내 프로필 정보 업데이트
 	UpdateMyProfile(context.Context, *UpdateMyProfileReq) (*UpdateMyProfileRes, error)
 	mustEmbedUnimplementedMemberServiceServer()
 }
